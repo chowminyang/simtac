@@ -1,0 +1,12 @@
+### Ran Playwright code
+```js
+await page.getByRole('button', { name: 'Export DOCX' }).click();
+```
+### Page
+- Page URL: http://127.0.0.1:3000/
+- Page Title: SIMTAC AI Scenario Builder
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-03-02T13-54-03-557Z.yml)
+### Events
+- Downloading file SIMTAC_Post-op_Abdominal_Sepsis_to_Shock_2026-03-02.docx ...
+- Downloaded file SIMTAC_Post-op_Abdominal_Sepsis_to_Shock_2026-03-02.docx to ".playwright-cli/SIMTAC-Post-op-Abdominal-Sepsis-to-Shock-2026-03-02.docx"

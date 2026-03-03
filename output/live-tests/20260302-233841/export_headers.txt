@@ -1,0 +1,11 @@
+HTTP/1.1 100 Continue
+
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-disposition: attachment; filename="SIMTAC_Near-Fatal_Asthma_Status_Asthmaticus_With_Impending_Respiratory_Failure_2026-03-02.docx"
+content-type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+Date: Mon, 02 Mar 2026 15:45:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+

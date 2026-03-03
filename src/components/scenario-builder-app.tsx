@@ -1,0 +1,2530 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+
+import { normalizeToDmyDate } from "@/lib/date-format";
+import { DEFAULT_SCENARIO } from "@/lib/scenario-defaults";
+import {
+  ALLOWED_MONITOR_LAYOUTS,
+  ALLOWED_MONITOR_PARAMETERS,
+} from "@/lib/simman-catalog";
+import type {
+  Citation,
+  GenerationMode,
+  ScenarioAppendixImage,
+  ScenarioDocument,
+  ScenarioStateRow,
+  ThinkingDepth,
+  ValidationWarning,
+} from "@/lib/types";
+
+type SectionKey =
+  | "courseInfo"
+  | "objectives"
+  | "clinicalSetting"
+  | "instructors"
+  | "confederates"
+  | "traineeRoles"
+  | "patientInfo"
+  | "scenarioInfo"
+  | "scenarioFlow"
+  | "equipment"
+  | "debriefInfo"
+  | "simulatorPrep"
+  | "monitorSetup"
+  | "documentInfo";
+
+type NavigationSectionKey = SectionKey | "appendixImages";
+
+const SECTION_LIST: Array<{ key: SectionKey; label: string }> = [
+  { key: "courseInfo", label: "1. Course & Trainee" },
+  { key: "objectives", label: "2. Learning Objectives" },
+  { key: "clinicalSetting", label: "3. Clinical Setting" },
+  { key: "instructors", label: "4. Instructors" },
+  { key: "confederates", label: "5. Confederates" },
+  { key: "traineeRoles", label: "6. Trainee Roles" },
+  { key: "patientInfo", label: "7. Patient Information" },
+  { key: "scenarioInfo", label: "8. Scenario Information" },
+  { key: "scenarioFlow", label: "9. Scenario Flow" },
+  { key: "equipment", label: "10. Equipment" },
+  { key: "debriefInfo", label: "11. Debrief Info" },
+  { key: "simulatorPrep", label: "12. Simulator Prep" },
+  { key: "monitorSetup", label: "13. Monitor Setup" },
+  { key: "documentInfo", label: "14. Document Info" },
+];
+
+const NAV_SECTION_LIST: Array<{ key: NavigationSectionKey; label: string }> = [
+  ...SECTION_LIST,
+  { key: "appendixImages", label: "15. Simulation Images" },
+];
+const SECTION_KEY_SET = new Set<SectionKey>(SECTION_LIST.map((section) => section.key));
+
+const STORAGE_KEY = "simtac_scenario_builder_v1";
+
+const EMPTY_STATE_ROW: ScenarioStateRow = {
+  stateName: "",
+  vitalSigns: { bp: "", pr: "", rr: "", spo2: "", rhythm: "" },
+  physicalExamDisplayedOnSimMan: [""],
+  physicalExamVolunteeredByInstructor: [""],
+  investigations: [""],
+  expectedActions: [""],
+  remarks: [""],
+  instructorControl: [""],
+  transitionRule: "next",
+};
+
+function buildSectionLockState(defaultValue = false): Record<SectionKey, boolean> {
+  return SECTION_LIST.reduce(
+    (acc, section) => {
+      acc[section.key] = defaultValue;
+      return acc;
+    },
+    {} as Record<SectionKey, boolean>,
+  );
+}
+
+function buildUnlockedGenerationScenario(
+  currentScenario: ScenarioDocument,
+  lockedSections: Record<SectionKey, boolean>,
+): ScenarioDocument {
+  const draft = structuredClone(currentScenario);
+
+  for (const section of SECTION_LIST) {
+    if (lockedSections[section.key]) continue;
+
+    switch (section.key) {
+      case "objectives": {
+        const count = Math.max(currentScenario.objectives.length, 1);
+        draft.objectives = Array.from({ length: count }, () => "");
+        break;
+      }
+      case "instructors": {
+        const count = Math.max(currentScenario.instructors.length, 1);
+        draft.instructors = Array.from({ length: count }, () => "");
+        break;
+      }
+      case "confederates": {
+        const count = Math.max(currentScenario.confederates.length, 1);
+        draft.confederates = Array.from({ length: count }, () => "");
+        break;
+      }
+      case "traineeRoles": {
+        const count = Math.max(currentScenario.traineeRoles.length, 1);
+        draft.traineeRoles = Array.from({ length: count }, () => "");
+        break;
+      }
+      case "scenarioFlow": {
+        const count = Math.max(currentScenario.scenarioFlow.length, 1);
+        draft.scenarioFlow = Array.from({ length: count }, () => structuredClone(EMPTY_STATE_ROW));
+        break;
+      }
+      case "equipment": {
+        const count = Math.max(currentScenario.equipment.length, 1);
+        draft.equipment = Array.from({ length: count }, (_, index) => ({
+          category: index === 0 ? "Airway and breathing" : "",
+          item: "",
+          quantity: "",
+          remarks: "",
+        }));
+        break;
+      }
+      case "simulatorPrep": {
+        const count = Math.max(currentScenario.simulatorPrep.length, 1);
+        draft.simulatorPrep = Array.from({ length: count }, () => "");
+        break;
+      }
+      default: {
+        draft[section.key] = structuredClone(DEFAULT_SCENARIO[section.key]) as never;
+      }
+    }
+  }
+
+  return draft;
+}
+
+function parsePath(path: string): Array<string | number> {
+  return path.split(".").map((segment) => (/^\d+$/.test(segment) ? Number(segment) : segment));
+}
+
+function getValueAtPath(source: unknown, path: string): unknown {
+  const parts = parsePath(path);
+  let current: unknown = source;
+
+  for (const part of parts) {
+    if (current == null) return undefined;
+    current = (current as Record<string, unknown>)[part as string];
+  }
+
+  return current;
+}
+
+function setValueAtPath(target: unknown, path: string, value: unknown): void {
+  const parts = parsePath(path);
+  if (parts.length === 0) return;
+
+  let current: unknown = target;
+  for (let index = 0; index < parts.length - 1; index += 1) {
+    if (current == null) return;
+    current = (current as Record<string, unknown>)[parts[index] as string];
+  }
+
+  if (current == null) return;
+  const last = parts[parts.length - 1];
+  (current as Record<string, unknown>)[last as string] = value;
+}
+
+function applyLockedFieldValues(
+  scenarioToPatch: ScenarioDocument,
+  currentScenario: ScenarioDocument,
+  lockedFields: Record<string, boolean>,
+): ScenarioDocument {
+  const patched = structuredClone(scenarioToPatch);
+
+  for (const [path, locked] of Object.entries(lockedFields)) {
+    if (!locked) continue;
+    const value = getValueAtPath(currentScenario, path);
+    if (value === undefined) continue;
+    setValueAtPath(patched, path, structuredClone(value));
+  }
+
+  return patched;
+}
+
+function applyAllLocksToScenario(
+  scenarioToPatch: ScenarioDocument,
+  currentScenario: ScenarioDocument,
+  lockedSections: Record<SectionKey, boolean>,
+  lockedScenarioFlowStates: Record<number, boolean>,
+  lockedFields: Record<string, boolean>,
+): ScenarioDocument {
+  const patched = structuredClone(scenarioToPatch);
+
+  for (const section of SECTION_LIST) {
+    if (!lockedSections[section.key]) continue;
+    patched[section.key] = structuredClone(currentScenario[section.key]) as never;
+  }
+
+  for (const [key, locked] of Object.entries(lockedScenarioFlowStates)) {
+    if (!locked) continue;
+    const index = Number.parseInt(key, 10);
+    if (!Number.isFinite(index) || index < 0) continue;
+    if (!currentScenario.scenarioFlow[index]) continue;
+
+    while (patched.scenarioFlow.length <= index) {
+      patched.scenarioFlow.push(structuredClone(EMPTY_STATE_ROW));
+    }
+    patched.scenarioFlow[index] = structuredClone(currentScenario.scenarioFlow[index]);
+  }
+
+  return applyLockedFieldValues(patched, currentScenario, lockedFields);
+}
+
+function reindexScenarioFlowStateLocksAfterRemove(
+  current: Record<number, boolean>,
+  removedIndex: number,
+): Record<number, boolean> {
+  const next: Record<number, boolean> = {};
+
+  for (const [key, locked] of Object.entries(current)) {
+    if (!locked) continue;
+    const index = Number.parseInt(key, 10);
+    if (!Number.isFinite(index) || index < 0) continue;
+    if (index === removedIndex) continue;
+    const adjustedIndex = index > removedIndex ? index - 1 : index;
+    next[adjustedIndex] = true;
+  }
+
+  return next;
+}
+
+function arrayFromTextarea(value: string): string[] {
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+function textareaFromArray(values: string[]): string {
+  return values.join("\n");
+}
+
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is string => typeof entry === "string");
+}
+
+function normalizeScenarioFlowRow(row: ScenarioStateRow): ScenarioStateRow {
+  const legacyPhysicalExam = toStringArray((row as ScenarioStateRow & { physicalExam?: unknown }).physicalExam);
+  const displayedOnSimMan = toStringArray(row.physicalExamDisplayedOnSimMan);
+  const volunteeredByInstructor = toStringArray(row.physicalExamVolunteeredByInstructor);
+
+  return {
+    ...EMPTY_STATE_ROW,
+    ...row,
+    vitalSigns: {
+      ...EMPTY_STATE_ROW.vitalSigns,
+      ...(row.vitalSigns || {}),
+    },
+    physicalExamDisplayedOnSimMan:
+      displayedOnSimMan.length > 0 ? displayedOnSimMan : legacyPhysicalExam,
+    physicalExamVolunteeredByInstructor: volunteeredByInstructor,
+    investigations: toStringArray(row.investigations),
+    expectedActions: toStringArray(row.expectedActions),
+    remarks: toStringArray(row.remarks),
+    instructorControl: toStringArray(row.instructorControl),
+  };
+}
+
+function normalizeScenario(scenario: ScenarioDocument): ScenarioDocument {
+  const normalizedScenarioFlow =
+    Array.isArray(scenario.scenarioFlow) && scenario.scenarioFlow.length > 0
+      ? scenario.scenarioFlow.map((row) => normalizeScenarioFlowRow(row))
+      : [
+          {
+            ...EMPTY_STATE_ROW,
+          },
+        ];
+
+  return {
+    ...scenario,
+    documentInfo: {
+      ...scenario.documentInfo,
+      dateScenarioDeveloped: normalizeToDmyDate(scenario.documentInfo.dateScenarioDeveloped),
+      dateScenarioUpdated: normalizeToDmyDate(scenario.documentInfo.dateScenarioUpdated),
+    },
+    scenarioFlow: normalizedScenarioFlow,
+    equipment:
+      scenario.equipment.length > 0
+        ? scenario.equipment
+        : [
+            {
+              category: "Airway and breathing",
+              item: "",
+              quantity: "",
+              remarks: "",
+            },
+          ],
+    appendixImages: Array.isArray(scenario.appendixImages) ? scenario.appendixImages : [],
+  };
+}
+
+export function ScenarioBuilderApp() {
+  const [scenario, setScenario] = useState<ScenarioDocument>(DEFAULT_SCENARIO);
+  const [mode, setMode] = useState<GenerationMode | null>(null);
+  const [prompt, setPrompt] = useState("");
+  const [thinkingDepth, setThinkingDepth] = useState<ThinkingDepth>(1);
+  const [warnings, setWarnings] = useState<ValidationWarning[]>([]);
+  const [citations, setCitations] = useState<Citation[]>([]);
+  const [activeSection, setActiveSection] = useState<NavigationSectionKey>("courseInfo");
+  const [showLeftSidebar, setShowLeftSidebar] = useState(true);
+  const [showRightSidebar, setShowRightSidebar] = useState(true);
+  const [lockedSections, setLockedSections] = useState<Record<SectionKey, boolean>>(
+    buildSectionLockState(false),
+  );
+  const [lockedScenarioFlowStates, setLockedScenarioFlowStates] = useState<Record<number, boolean>>({});
+  const [lockedFields, setLockedFields] = useState<Record<string, boolean>>({});
+  const [selectedFieldPath, setSelectedFieldPath] = useState("");
+  const [imagePrompt, setImagePrompt] = useState("");
+  const [imageSize, setImageSize] = useState<"1024x1024" | "1536x1024" | "1024x1536" | "auto">("1536x1024");
+  const [imageQuality, setImageQuality] = useState<"low" | "medium" | "high" | "auto">("medium");
+  const [generatedImages, setGeneratedImages] = useState<ScenarioAppendixImage[]>([]);
+  const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({});
+  const [imageBusy, setImageBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [busySection, setBusySection] = useState<SectionKey | null>(null);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [updateDialogPrompt, setUpdateDialogPrompt] = useState("");
+  const [statusMessage, setStatusMessage] = useState("Ready. Singapore healthcare context is enabled by default.");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const sectionRefs = useRef<Record<NavigationSectionKey, HTMLElement | null>>({
+    courseInfo: null,
+    objectives: null,
+    clinicalSetting: null,
+    instructors: null,
+    confederates: null,
+    traineeRoles: null,
+    patientInfo: null,
+    scenarioInfo: null,
+    scenarioFlow: null,
+    equipment: null,
+    debriefInfo: null,
+    simulatorPrep: null,
+    monitorSetup: null,
+    documentInfo: null,
+    appendixImages: null,
+  });
+
+  useEffect(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed.scenario) setScenario(normalizeScenario(parsed.scenario as ScenarioDocument));
+      if (parsed.mode) setMode(parsed.mode as GenerationMode);
+      if (parsed.prompt) setPrompt(String(parsed.prompt));
+      if (typeof parsed.showLeftSidebar === "boolean") {
+        setShowLeftSidebar(parsed.showLeftSidebar);
+      }
+      if (typeof parsed.showRightSidebar === "boolean") {
+        setShowRightSidebar(parsed.showRightSidebar);
+      }
+      if (
+        parsed.thinkingDepth === 0 ||
+        parsed.thinkingDepth === 1 ||
+        parsed.thinkingDepth === 2
+      ) {
+        setThinkingDepth(parsed.thinkingDepth as ThinkingDepth);
+      }
+      if (parsed.imagePrompt) setImagePrompt(String(parsed.imagePrompt));
+      if (
+        parsed.imageSize === "1024x1024" ||
+        parsed.imageSize === "1536x1024" ||
+        parsed.imageSize === "1024x1536" ||
+        parsed.imageSize === "auto"
+      ) {
+        setImageSize(parsed.imageSize);
+      }
+      if (
+        parsed.imageQuality === "low" ||
+        parsed.imageQuality === "medium" ||
+        parsed.imageQuality === "high" ||
+        parsed.imageQuality === "auto"
+      ) {
+        setImageQuality(parsed.imageQuality);
+      }
+      if (Array.isArray(parsed.warnings)) setWarnings(parsed.warnings as ValidationWarning[]);
+      if (Array.isArray(parsed.citations)) setCitations(parsed.citations as Citation[]);
+      if (parsed.lockedSections && typeof parsed.lockedSections === "object") {
+        const restored = buildSectionLockState(false);
+        for (const section of SECTION_LIST) {
+          if (parsed.lockedSections[section.key]) restored[section.key] = true;
+        }
+        setLockedSections(restored);
+      }
+      if (parsed.lockedScenarioFlowStates && typeof parsed.lockedScenarioFlowStates === "object") {
+        const restored: Record<number, boolean> = {};
+        Object.entries(parsed.lockedScenarioFlowStates as Record<string, unknown>).forEach(([key, value]) => {
+          const index = Number.parseInt(key, 10);
+          if (!Number.isFinite(index) || index < 0) return;
+          if (value) restored[index] = true;
+        });
+        setLockedScenarioFlowStates(restored);
+      }
+      if (parsed.lockedFields && typeof parsed.lockedFields === "object") {
+        setLockedFields(parsed.lockedFields as Record<string, boolean>);
+      }
+    } catch {
+      // ignore corrupt local storage payload
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          scenario,
+          mode,
+          prompt,
+          showLeftSidebar,
+          showRightSidebar,
+          thinkingDepth,
+          imagePrompt,
+          imageSize,
+          imageQuality,
+          warnings,
+          citations,
+          lockedSections,
+          lockedScenarioFlowStates,
+          lockedFields,
+        }),
+      );
+    } catch {
+      // ignore storage quota errors for large scenarios containing images
+    }
+  }, [
+    scenario,
+    mode,
+    prompt,
+    showLeftSidebar,
+    showRightSidebar,
+    thinkingDepth,
+    imagePrompt,
+    imageSize,
+    imageQuality,
+    warnings,
+    citations,
+    lockedSections,
+    lockedScenarioFlowStates,
+    lockedFields,
+  ]);
+
+  useEffect(() => {
+    setLockedScenarioFlowStates((current) => {
+      const next: Record<number, boolean> = {};
+      for (const [key, locked] of Object.entries(current)) {
+        if (!locked) continue;
+        const index = Number.parseInt(key, 10);
+        if (!Number.isFinite(index) || index < 0) continue;
+        if (index >= scenario.scenarioFlow.length) continue;
+        next[index] = true;
+      }
+      return next;
+    });
+  }, [scenario.scenarioFlow.length]);
+
+  const config = useMemo(
+    () => ({
+      thinkingDepth,
+    }),
+    [thinkingDepth],
+  );
+
+  const latestRefinementSource = useMemo(() => {
+    if (generatedImages.length > 0) return generatedImages[0];
+    if (scenario.appendixImages.length > 0) return scenario.appendixImages[scenario.appendixImages.length - 1];
+    return null;
+  }, [generatedImages, scenario.appendixImages]);
+
+  function updateScenario(updater: (draft: ScenarioDocument) => void) {
+    setScenario((current) => {
+      const draft = structuredClone(current);
+      updater(draft);
+      return draft;
+    });
+  }
+
+  function toggleSectionLock(section: SectionKey) {
+    setLockedSections((current) => ({
+      ...current,
+      [section]: !current[section],
+    }));
+  }
+
+  function toggleScenarioFlowStateLock(index: number) {
+    if (index < 0 || index >= scenario.scenarioFlow.length) return;
+    setLockedScenarioFlowStates((current) => ({
+      ...current,
+      [index]: !current[index],
+    }));
+  }
+
+  function isScenarioFlowStateLocked(index: number): boolean {
+    return Boolean(lockedScenarioFlowStates[index]);
+  }
+
+  function isFieldLocked(path: string): boolean {
+    const scenarioFlowMatch = path.match(/^scenarioFlow\.(\d+)(?:\.|$)/);
+    if (scenarioFlowMatch) {
+      const stateIndex = Number.parseInt(scenarioFlowMatch[1], 10);
+      if (Number.isFinite(stateIndex) && isScenarioFlowStateLocked(stateIndex)) {
+        return true;
+      }
+    }
+
+    if (lockedFields[path]) return true;
+
+    const rootSegment = path.split(".")[0];
+    if (SECTION_KEY_SET.has(rootSegment as SectionKey)) {
+      return lockedSections[rootSegment as SectionKey];
+    }
+
+    return false;
+  }
+
+  function lockField(path: string) {
+    if (!path) return;
+    setLockedFields((current) => ({ ...current, [path]: true }));
+  }
+
+  function unlockField(path: string) {
+    if (!path) return;
+    setLockedFields((current) => {
+      if (!current[path]) return current;
+      const next = { ...current };
+      delete next[path];
+      return next;
+    });
+  }
+
+  const lockedSectionCount = useMemo(
+    () => SECTION_LIST.reduce((count, section) => count + (lockedSections[section.key] ? 1 : 0), 0),
+    [lockedSections],
+  );
+  const lockedScenarioFlowStateCount = useMemo(
+    () => Object.values(lockedScenarioFlowStates).reduce((count, locked) => count + (locked ? 1 : 0), 0),
+    [lockedScenarioFlowStates],
+  );
+  const lockedFieldCount = useMemo(
+    () => Object.values(lockedFields).reduce((count, locked) => count + (locked ? 1 : 0), 0),
+    [lockedFields],
+  );
+  const workspaceGridClass = useMemo(() => {
+    if (showLeftSidebar && showRightSidebar) {
+      return "grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_360px]";
+    }
+    if (showLeftSidebar && !showRightSidebar) {
+      return "grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]";
+    }
+    if (!showLeftSidebar && showRightSidebar) {
+      return "grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]";
+    }
+    return "grid gap-4";
+  }, [showLeftSidebar, showRightSidebar]);
+
+  const fieldOptions = useMemo(() => {
+    const options: Array<{ path: string; label: string }> = [];
+    const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase());
+
+    Object.keys(scenario.courseInfo).forEach((key) => options.push({ path: `courseInfo.${key}`, label: `Course Info · ${humanize(key)}` }));
+    options.push({ path: "objectives", label: "Learning Objectives (list)" });
+    options.push({ path: "clinicalSetting.settingRequired", label: "Clinical Setting · Setting required" });
+    options.push({ path: "clinicalSetting.remarks", label: "Clinical Setting · Remarks" });
+    options.push({ path: "instructors", label: "Instructors (list)" });
+    options.push({ path: "confederates", label: "Confederates (list)" });
+    options.push({ path: "traineeRoles", label: "Trainee Roles (list)" });
+    Object.keys(scenario.patientInfo).forEach((key) =>
+      options.push({ path: `patientInfo.${key}`, label: `Patient Info · ${humanize(key)}` }),
+    );
+    Object.keys(scenario.scenarioInfo).forEach((key) =>
+      options.push({ path: `scenarioInfo.${key}`, label: `Scenario Info · ${humanize(key)}` }),
+    );
+    scenario.scenarioFlow.forEach((_, index) => {
+      options.push({ path: `scenarioFlow.${index}.stateName`, label: `Scenario Flow S${index + 1} · State name` });
+      (["bp", "pr", "rr", "spo2", "rhythm"] as const).forEach((key) =>
+        options.push({
+          path: `scenarioFlow.${index}.vitalSigns.${key}`,
+          label: `Scenario Flow S${index + 1} · Vital ${key.toUpperCase()}`,
+        }),
+      );
+      options.push({
+        path: `scenarioFlow.${index}.physicalExamDisplayedOnSimMan`,
+        label: `Scenario Flow S${index + 1} · Physical exam (Displayed on SimMan)`,
+      });
+      options.push({
+        path: `scenarioFlow.${index}.physicalExamVolunteeredByInstructor`,
+        label: `Scenario Flow S${index + 1} · Physical exam (Volunteered by instructor)`,
+      });
+      options.push({ path: `scenarioFlow.${index}.investigations`, label: `Scenario Flow S${index + 1} · Investigations` });
+      options.push({ path: `scenarioFlow.${index}.expectedActions`, label: `Scenario Flow S${index + 1} · Expected actions` });
+      options.push({ path: `scenarioFlow.${index}.remarks`, label: `Scenario Flow S${index + 1} · Remarks` });
+      options.push({ path: `scenarioFlow.${index}.instructorControl`, label: `Scenario Flow S${index + 1} · Instructor control` });
+      options.push({ path: `scenarioFlow.${index}.transitionRule`, label: `Scenario Flow S${index + 1} · Transition rule` });
+    });
+    scenario.equipment.forEach((_, index) => {
+      options.push({ path: `equipment.${index}.category`, label: `Equipment Row ${index + 1} · Category` });
+      options.push({ path: `equipment.${index}.item`, label: `Equipment Row ${index + 1} · Item` });
+      options.push({ path: `equipment.${index}.quantity`, label: `Equipment Row ${index + 1} · Quantity` });
+      options.push({ path: `equipment.${index}.remarks`, label: `Equipment Row ${index + 1} · Remarks` });
+    });
+    Object.keys(scenario.debriefInfo).forEach((key) =>
+      options.push({ path: `debriefInfo.${key}`, label: `Debrief Info · ${humanize(key)}` }),
+    );
+    options.push({ path: "simulatorPrep", label: "Simulator Prep (list)" });
+    options.push({ path: "monitorSetup.layout", label: "Monitor Setup · Layout options" });
+    options.push({ path: "monitorSetup.parameters", label: "Monitor Setup · Parameter options" });
+    Object.keys(scenario.documentInfo).forEach((key) =>
+      options.push({ path: `documentInfo.${key}`, label: `Document Info · ${humanize(key)}` }),
+    );
+    options.push({ path: "appendixImages", label: "Simulation Images (appendix list)" });
+    scenario.appendixImages.forEach((_, index) => {
+      options.push({ path: `appendixImages.${index}.caption`, label: `Appendix Image ${index + 1} · Caption` });
+    });
+
+    return options;
+  }, [scenario]);
+
+  const fieldLabelByPath = useMemo(
+    () => new Map(fieldOptions.map((option) => [option.path, option.label] as const)),
+    [fieldOptions],
+  );
+
+  useEffect(() => {
+    if (!fieldOptions.length) {
+      setSelectedFieldPath("");
+      return;
+    }
+
+    if (!fieldOptions.some((option) => option.path === selectedFieldPath)) {
+      setSelectedFieldPath("");
+    }
+  }, [fieldOptions, selectedFieldPath]);
+
+  async function callApi<T>(url: string, init: RequestInit): Promise<T> {
+    const response = await fetch(url, init);
+    if (!response.ok) {
+      let message = `Request failed (${response.status})`;
+      try {
+        const body = (await response.json()) as { error?: string };
+        if (body.error) message = body.error;
+      } catch {
+        // ignore
+      }
+      throw new Error(message);
+    }
+
+    return (await response.json()) as T;
+  }
+
+  async function runGenerate() {
+    if (!mode) return;
+    setErrorMessage("");
+    setStatusMessage("Generating scenario...");
+    setBusy(true);
+
+    try {
+      const payload =
+        mode === "ai_prompt"
+          ? {
+              mode,
+              prompt,
+              config,
+            }
+          : {
+              mode,
+              prompt,
+              scenario,
+              config,
+            };
+
+      const result = await callApi<{
+        scenario: ScenarioDocument;
+        warnings: ValidationWarning[];
+        citations: Citation[];
+      }>("/api/scenario/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const lockedAwareScenario = applyAllLocksToScenario(
+        result.scenario,
+        scenario,
+        lockedSections,
+        lockedScenarioFlowStates,
+        lockedFields,
+      );
+      setScenario(normalizeScenario(lockedAwareScenario));
+      setWarnings(result.warnings || []);
+      setCitations(result.citations || []);
+      setStatusMessage("Scenario generated.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to generate scenario.");
+      setStatusMessage("Generation failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runFillSection(section: SectionKey) {
+    if (lockedSections[section]) {
+      setStatusMessage(`Section '${section}' is locked. Unlock it to run AI fill.`);
+      return;
+    }
+
+    setErrorMessage("");
+    setBusySection(section);
+    setStatusMessage(`Filling ${section} with AI...`);
+
+    try {
+      const result = await callApi<{
+        scenario: ScenarioDocument;
+        warnings: ValidationWarning[];
+        citations: Citation[];
+      }>("/api/scenario/fill-section", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          section,
+          scenario,
+          prompt,
+          config,
+        }),
+      });
+
+      const lockedAwareScenario = applyAllLocksToScenario(
+        result.scenario,
+        scenario,
+        lockedSections,
+        lockedScenarioFlowStates,
+        lockedFields,
+      );
+      setScenario(normalizeScenario(lockedAwareScenario));
+      setWarnings(result.warnings || []);
+      setCitations(result.citations || []);
+      setStatusMessage(`Section '${section}' filled.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to fill section.");
+      setStatusMessage("Section fill failed.");
+    } finally {
+      setBusySection(null);
+    }
+  }
+
+  async function runUpdateUnlockedSections(additionalGuidance?: string): Promise<boolean> {
+    if (!mode) return false;
+    if (lockedSectionCount === SECTION_LIST.length) {
+      setErrorMessage("All sections are locked. Unlock at least one section to update with AI.");
+      return false;
+    }
+
+    setErrorMessage("");
+    setStatusMessage("Updating unlocked sections with AI...");
+    setBusy(true);
+
+    try {
+      const extra = additionalGuidance?.trim() || "";
+      const mergedPrompt =
+        prompt.trim() && extra
+          ? `${prompt.trim()}\n\nUpdate request:\n${extra}`
+          : prompt.trim() || (extra ? `Update request:\n${extra}` : "");
+
+      const seededScenario = applyLockedFieldValues(
+        buildUnlockedGenerationScenario(scenario, lockedSections),
+        scenario,
+        lockedFields,
+      );
+      const result = await callApi<{
+        scenario: ScenarioDocument;
+        warnings: ValidationWarning[];
+        citations: Citation[];
+      }>("/api/scenario/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "worksheet_assist",
+          prompt: mergedPrompt,
+          scenario: seededScenario,
+          config,
+        }),
+      });
+
+      const lockedAwareScenario = applyAllLocksToScenario(
+        result.scenario,
+        scenario,
+        lockedSections,
+        lockedScenarioFlowStates,
+        lockedFields,
+      );
+      setScenario(normalizeScenario(lockedAwareScenario));
+      setWarnings(result.warnings || []);
+      setCitations(result.citations || []);
+      setStatusMessage("Unlocked sections updated.");
+      return true;
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update unlocked sections.");
+      setStatusMessage("AI update failed.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function openUpdateUnlockedDialog() {
+    if (lockedSectionCount === SECTION_LIST.length) {
+      setErrorMessage("All sections are locked. Unlock at least one section to update with AI.");
+      return;
+    }
+    setUpdateDialogPrompt("");
+    setUpdateDialogOpen(true);
+  }
+
+  async function submitUpdateUnlockedDialog() {
+    const success = await runUpdateUnlockedSections(updateDialogPrompt);
+    if (success) {
+      setUpdateDialogOpen(false);
+      setUpdateDialogPrompt("");
+    }
+  }
+
+  async function runValidate() {
+    setErrorMessage("");
+    setStatusMessage("Validating scenario...");
+
+    try {
+      const result = await callApi<{ warnings: ValidationWarning[] }>("/api/scenario/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scenario }),
+      });
+
+      setWarnings(result.warnings || []);
+      setStatusMessage("Validation complete.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Validation failed.");
+      setStatusMessage("Validation failed.");
+    }
+  }
+
+  async function runExport() {
+    setErrorMessage("");
+    setStatusMessage("Exporting DOCX...");
+
+    try {
+      const response = await fetch("/api/scenario/export-docx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scenario }),
+      });
+
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string };
+        throw new Error(body.error || "Export failed.");
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get("Content-Disposition");
+      const fileNameMatch = contentDisposition?.match(/filename=\"(.+)\"/);
+      const fileName = fileNameMatch?.[1] || "SIMTAC_Scenario.docx";
+
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = fileName;
+      anchor.click();
+      URL.revokeObjectURL(objectUrl);
+
+      setStatusMessage("DOCX exported.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Export failed.");
+      setStatusMessage("Export failed.");
+    }
+  }
+
+  async function runGenerateImage(
+    modeValue: "new" | "refine",
+    baseImageDataUrl?: string,
+  ) {
+    if (!imagePrompt.trim()) {
+      setErrorMessage("Enter an image prompt before generating.");
+      return;
+    }
+
+    if (modeValue === "refine" && !baseImageDataUrl) {
+      setErrorMessage("No base image available for refinement.");
+      return;
+    }
+
+    setErrorMessage("");
+    setImageBusy(true);
+    setStatusMessage(modeValue === "new" ? "Generating medical image..." : "Refining medical image...");
+
+    try {
+      const result = await callApi<{ image: ScenarioAppendixImage }>("/api/imagegen/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: modeValue,
+          prompt: imagePrompt,
+          size: imageSize,
+          quality: imageQuality,
+          baseImageDataUrl,
+        }),
+      });
+
+      setGeneratedImages((current) => [result.image, ...current].slice(0, 8));
+      setImagePrompt(result.image.revisedPrompt || imagePrompt);
+      setStatusMessage(modeValue === "new" ? "Image generated." : "Image refined.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Image generation failed.");
+      setStatusMessage("Image generation failed.");
+    } finally {
+      setImageBusy(false);
+    }
+  }
+
+  function saveGeneratedImage(image: ScenarioAppendixImage) {
+    updateScenario((draft) => {
+      draft.appendixImages.push({
+        ...image,
+        id: `saved_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      });
+    });
+    setGeneratedImages((current) => current.filter((item) => item.id !== image.id));
+    setStatusMessage("Image saved to scenario appendix.");
+  }
+
+  function removeSavedImage(index: number) {
+    const image = scenario.appendixImages[index];
+    const draftKey = image?.id || `appendix-${index}`;
+
+    updateScenario((draft) => {
+      if (index < 0 || index >= draft.appendixImages.length) return;
+      draft.appendixImages.splice(index, 1);
+    });
+
+    setCaptionDrafts((current) => {
+      if (!(draftKey in current)) return current;
+      const next = { ...current };
+      delete next[draftKey];
+      return next;
+    });
+
+    setStatusMessage("Saved appendix image removed.");
+  }
+
+  function resetAll() {
+    if (!window.confirm("Reset the entire scenario workspace? This will clear all current edits.")) {
+      return;
+    }
+
+    setScenario(structuredClone(DEFAULT_SCENARIO));
+    setPrompt("");
+    setThinkingDepth(1);
+    setWarnings([]);
+    setCitations([]);
+    setActiveSection("courseInfo");
+    setLockedSections(buildSectionLockState(false));
+    setLockedScenarioFlowStates({});
+    setLockedFields({});
+    setSelectedFieldPath("");
+    setImagePrompt("");
+    setImageSize("1536x1024");
+    setImageQuality("medium");
+    setGeneratedImages([]);
+    setCaptionDrafts({});
+    setUpdateDialogOpen(false);
+    setUpdateDialogPrompt("");
+    setErrorMessage("");
+    setStatusMessage("Workspace reset.");
+  }
+
+  function jumpToSection(section: NavigationSectionKey) {
+    setActiveSection(section);
+    sectionRefs.current[section]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f7fbff_0%,#f8f6f1_45%,#f3f3f0_100%)] text-slate-900">
+      <div className="mx-auto max-w-[1500px] px-4 py-6 md:px-8">
+        <header className="mb-6 rounded-2xl border border-slate-200 bg-white/85 p-5 shadow-sm backdrop-blur">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-3xl font-semibold tracking-tight">SIMTAC AI Scenario Builder</h1>
+              <p className="mt-2 max-w-4xl text-sm text-slate-700">
+                Generate and refine Singapore-context medical simulation scenarios with strict SimMan capability checks and direct DOCX export.
+              </p>
+              <p className="mt-2 text-xs text-slate-600">{statusMessage}</p>
+              {errorMessage ? <p className="mt-1 text-sm text-rose-700">{errorMessage}</p> : null}
+            </div>
+            <Image
+              src="/ttsh-logo.jpg"
+              alt="Tan Tock Seng Hospital logo"
+              width={496}
+              height={308}
+              className="h-24 w-auto shrink-0 object-contain sm:h-28 md:h-32"
+              unoptimized
+              priority
+            />
+          </div>
+        </header>
+
+        {!mode ? (
+          <section className="grid gap-4 md:grid-cols-2">
+            <button
+              type="button"
+              className="rounded-2xl border border-slate-300 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              onClick={() => setMode("ai_prompt")}
+            >
+              <h2 className="text-xl font-semibold">Create with AI</h2>
+              <p className="mt-2 text-sm text-slate-700">
+                Describe a scenario in free text and let AI build a complete SIMTAC worksheet for Singapore healthcare training.
+              </p>
+            </button>
+            <button
+              type="button"
+              className="rounded-2xl border border-slate-300 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              onClick={() => setMode("worksheet_assist")}
+            >
+              <h2 className="text-xl font-semibold">Fill Worksheet</h2>
+              <p className="mt-2 text-sm text-slate-700">
+                Fill key worksheet fields manually and use AI to complete missing sections using Singapore-context clinical logic.
+              </p>
+            </button>
+          </section>
+        ) : (
+          <div className={workspaceGridClass}>
+            {showLeftSidebar ? (
+              <aside className="sticky top-4 flex max-h-[calc(100vh-2rem)] flex-col rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
+                <button
+                  type="button"
+                  className="mb-3 w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-medium"
+                  onClick={() => setMode(null)}
+                >
+                  Back to mode selection
+                </button>
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <ul className="space-y-1">
+                    {NAV_SECTION_LIST.map((section) => (
+                      <li key={section.key}>
+                        <button
+                          type="button"
+                          onClick={() => jumpToSection(section.key)}
+                          className={`w-full rounded-md px-2 py-2 text-left text-xs transition ${
+                            activeSection === section.key
+                              ? "bg-slate-900 text-white"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          }`}
+                        >
+                          {section.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <a
+                  href="/help"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 block w-full rounded-md bg-emerald-700 px-2 py-2 text-center text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-800"
+                >
+                  Getting Started / How To Use
+                </a>
+              </aside>
+            ) : null}
+
+            <main className="space-y-4">
+              <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Workspace Layout</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium"
+                      onClick={() => setShowLeftSidebar((current) => !current)}
+                    >
+                      {showLeftSidebar ? "Hide Left Sidebar" : "Show Left Sidebar"}
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium"
+                      onClick={() => setShowRightSidebar((current) => !current)}
+                    >
+                      {showRightSidebar ? "Hide Right Sidebar" : "Show Right Sidebar"}
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h2 className="text-lg font-semibold">Scenario Prompt</h2>
+                <textarea
+                  className="mt-2 h-28 w-full rounded-md border border-slate-300 p-2 text-sm"
+                  value={prompt}
+                  onChange={(event) => setPrompt(event.target.value)}
+                  placeholder={
+                    mode === "ai_prompt"
+                      ? "Describe your scenario goals, progression, expected learner actions, and Singapore clinical context (ward/ED/OT/ICU, team roles, escalation workflow)..."
+                      : "Optional guidance for AI filling, e.g. focus on airway escalation, ISBAR/SBAR communication, and local escalation pathways."
+                  }
+                />
+                {mode === "ai_prompt" ? (
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                      onClick={runGenerate}
+                    >
+                      {busy ? "Working..." : "Generate Scenario"}
+                    </button>
+                  </div>
+                ) : null}
+              </section>
+
+              <section
+                id="courseInfo"
+                ref={(element) => {
+                  sectionRefs.current.courseInfo = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="1. Course & Trainee Information"
+                  onFill={() => runFillSection("courseInfo")}
+                  loading={busySection === "courseInfo"}
+                  locked={lockedSections.courseInfo}
+                />
+                <RecordEditor
+                  sectionKey="courseInfo"
+                  record={scenario.courseInfo}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(key, value) =>
+                    updateScenario((draft) => {
+                      (draft.courseInfo as unknown as Record<string, string>)[key] = value as string;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="objectives"
+                ref={(element) => {
+                  sectionRefs.current.objectives = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="2. Specific Learning Objectives"
+                  onFill={() => runFillSection("objectives")}
+                  loading={busySection === "objectives"}
+                  locked={lockedSections.objectives}
+                />
+                <ArrayEditor
+                  sectionKey="objectives"
+                  items={scenario.objectives}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(items) =>
+                    updateScenario((draft) => {
+                      draft.objectives = items;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="clinicalSetting"
+                ref={(element) => {
+                  sectionRefs.current.clinicalSetting = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="3. Clinical / Environment Setting"
+                  onFill={() => runFillSection("clinicalSetting")}
+                  loading={busySection === "clinicalSetting"}
+                  locked={lockedSections.clinicalSetting}
+                />
+                <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-600">Setting required</label>
+                <textarea
+                  className={`mb-3 h-16 w-full rounded-md border p-2 text-sm ${
+                    isFieldLocked("clinicalSetting.settingRequired")
+                      ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                      : "border-slate-300"
+                  }`}
+                  value={scenario.clinicalSetting.settingRequired}
+                  disabled={isFieldLocked("clinicalSetting.settingRequired")}
+                  onFocus={() => setSelectedFieldPath("clinicalSetting.settingRequired")}
+                  onChange={(event) =>
+                    updateScenario((draft) => {
+                      draft.clinicalSetting.settingRequired = event.target.value;
+                    })
+                  }
+                />
+                <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-600">Remarks</label>
+                <textarea
+                  className={`h-16 w-full rounded-md border p-2 text-sm ${
+                    isFieldLocked("clinicalSetting.remarks")
+                      ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                      : "border-slate-300"
+                  }`}
+                  value={scenario.clinicalSetting.remarks || ""}
+                  disabled={isFieldLocked("clinicalSetting.remarks")}
+                  onFocus={() => setSelectedFieldPath("clinicalSetting.remarks")}
+                  onChange={(event) =>
+                    updateScenario((draft) => {
+                      draft.clinicalSetting.remarks = event.target.value;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="instructors"
+                ref={(element) => {
+                  sectionRefs.current.instructors = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="4. Instructor Information"
+                  onFill={() => runFillSection("instructors")}
+                  loading={busySection === "instructors"}
+                  locked={lockedSections.instructors}
+                />
+                <ArrayEditor
+                  sectionKey="instructors"
+                  items={scenario.instructors}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(items) =>
+                    updateScenario((draft) => {
+                      draft.instructors = items;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="confederates"
+                ref={(element) => {
+                  sectionRefs.current.confederates = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="5. Confederate Information"
+                  onFill={() => runFillSection("confederates")}
+                  loading={busySection === "confederates"}
+                  locked={lockedSections.confederates}
+                />
+                <ArrayEditor
+                  sectionKey="confederates"
+                  items={scenario.confederates}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(items) =>
+                    updateScenario((draft) => {
+                      draft.confederates = items;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="traineeRoles"
+                ref={(element) => {
+                  sectionRefs.current.traineeRoles = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="6. Trainees Role"
+                  onFill={() => runFillSection("traineeRoles")}
+                  loading={busySection === "traineeRoles"}
+                  locked={lockedSections.traineeRoles}
+                />
+                <ArrayEditor
+                  sectionKey="traineeRoles"
+                  items={scenario.traineeRoles}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(items) =>
+                    updateScenario((draft) => {
+                      draft.traineeRoles = items;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="patientInfo"
+                ref={(element) => {
+                  sectionRefs.current.patientInfo = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="7. Patient Information"
+                  onFill={() => runFillSection("patientInfo")}
+                  loading={busySection === "patientInfo"}
+                  locked={lockedSections.patientInfo}
+                />
+                <RecordEditor
+                  sectionKey="patientInfo"
+                  record={scenario.patientInfo}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(key, value) =>
+                    updateScenario((draft) => {
+                      (draft.patientInfo as unknown as Record<string, string | boolean>)[key] = value;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="scenarioInfo"
+                ref={(element) => {
+                  sectionRefs.current.scenarioInfo = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="8. Scenario Information"
+                  onFill={() => runFillSection("scenarioInfo")}
+                  loading={busySection === "scenarioInfo"}
+                  locked={lockedSections.scenarioInfo}
+                />
+                <RecordEditor
+                  sectionKey="scenarioInfo"
+                  record={scenario.scenarioInfo}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(key, value) =>
+                    updateScenario((draft) => {
+                      (draft.scenarioInfo as unknown as Record<string, string>)[key] = value as string;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="scenarioFlow"
+                ref={(element) => {
+                  sectionRefs.current.scenarioFlow = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="9. Scenario Flow"
+                  onFill={() => runFillSection("scenarioFlow")}
+                  loading={busySection === "scenarioFlow"}
+                  locked={lockedSections.scenarioFlow}
+                />
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm text-slate-700">State-by-state simulator control and expected action flow.</p>
+                  <button
+                    type="button"
+                    className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium"
+                    disabled={lockedSections.scenarioFlow}
+                    onClick={() =>
+                      updateScenario((draft) => {
+                        draft.scenarioFlow.push(structuredClone(EMPTY_STATE_ROW));
+                      })
+                    }
+                  >
+                    + Add state
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {scenario.scenarioFlow.map((row, rowIndex) => {
+                    const stateLocked = isScenarioFlowStateLocked(rowIndex);
+
+                    return (
+                    <div
+                      key={`scenario-row-${rowIndex}`}
+                      className={`rounded-xl border p-3 ${
+                        stateLocked
+                          ? "border-amber-300 bg-amber-50 text-amber-900"
+                          : "border-slate-300 bg-slate-50"
+                      }`}
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="text-sm font-semibold">State {rowIndex + 1}</p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className={`rounded-md border px-2 py-1 text-xs font-medium ${
+                              stateLocked
+                                ? "border-amber-400 bg-amber-100 text-amber-900"
+                                : "border-slate-300 bg-white text-slate-700"
+                            }`}
+                            disabled={lockedSections.scenarioFlow}
+                            onClick={() => toggleScenarioFlowStateLock(rowIndex)}
+                          >
+                            {stateLocked ? "Unlock state" : "Lock state"}
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
+                            disabled={scenario.scenarioFlow.length <= 1 || lockedSections.scenarioFlow || stateLocked}
+                            onClick={() => {
+                              setLockedScenarioFlowStates((current) =>
+                                reindexScenarioFlowStateLocksAfterRemove(current, rowIndex),
+                              );
+                              updateScenario((draft) => {
+                                if (draft.scenarioFlow.length <= 1) return;
+                                draft.scenarioFlow.splice(rowIndex, 1);
+                              });
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+
+                      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-600">State name</label>
+                      <input
+                        className={`mb-3 w-full rounded-md border px-2 py-1 text-sm ${
+                          isFieldLocked(`scenarioFlow.${rowIndex}.stateName`)
+                            ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                            : "border-slate-300"
+                        }`}
+                        value={row.stateName}
+                        disabled={isFieldLocked(`scenarioFlow.${rowIndex}.stateName`)}
+                        onFocus={() => setSelectedFieldPath(`scenarioFlow.${rowIndex}.stateName`)}
+                        onChange={(event) =>
+                          updateScenario((draft) => {
+                            draft.scenarioFlow[rowIndex].stateName = event.target.value;
+                          })
+                        }
+                      />
+
+                      <div className="mb-3 grid gap-2 sm:grid-cols-5">
+                        {(["bp", "pr", "rr", "spo2", "rhythm"] as const).map((key) => (
+                          <label key={key} className="text-xs text-slate-700">
+                            <span className="mb-1 block uppercase">{key}</span>
+                            <input
+                              className={`w-full rounded-md border px-2 py-1 text-sm ${
+                                isFieldLocked(`scenarioFlow.${rowIndex}.vitalSigns.${key}`)
+                                  ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                                  : "border-slate-300"
+                              }`}
+                              value={row.vitalSigns[key] || ""}
+                              disabled={isFieldLocked(`scenarioFlow.${rowIndex}.vitalSigns.${key}`)}
+                              onFocus={() => setSelectedFieldPath(`scenarioFlow.${rowIndex}.vitalSigns.${key}`)}
+                              onChange={(event) =>
+                                updateScenario((draft) => {
+                                  draft.scenarioFlow[rowIndex].vitalSigns[key] = event.target.value;
+                                })
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <LabeledTextArea
+                          label="Physical exam (Displayed on SimMan only)"
+                          path={`scenarioFlow.${rowIndex}.physicalExamDisplayedOnSimMan`}
+                          value={textareaFromArray(row.physicalExamDisplayedOnSimMan)}
+                          isFieldLocked={isFieldLocked}
+                          onFieldFocus={setSelectedFieldPath}
+                          onChange={(value) =>
+                            updateScenario((draft) => {
+                              draft.scenarioFlow[rowIndex].physicalExamDisplayedOnSimMan = arrayFromTextarea(value);
+                            })
+                          }
+                        />
+                        <LabeledTextArea
+                          label="Physical exam (Volunteered by instructor)"
+                          path={`scenarioFlow.${rowIndex}.physicalExamVolunteeredByInstructor`}
+                          value={textareaFromArray(row.physicalExamVolunteeredByInstructor)}
+                          isFieldLocked={isFieldLocked}
+                          onFieldFocus={setSelectedFieldPath}
+                          onChange={(value) =>
+                            updateScenario((draft) => {
+                              draft.scenarioFlow[rowIndex].physicalExamVolunteeredByInstructor = arrayFromTextarea(value);
+                            })
+                          }
+                        />
+                        <LabeledTextArea
+                          label="Investigations"
+                          path={`scenarioFlow.${rowIndex}.investigations`}
+                          value={textareaFromArray(row.investigations)}
+                          isFieldLocked={isFieldLocked}
+                          onFieldFocus={setSelectedFieldPath}
+                          onChange={(value) =>
+                            updateScenario((draft) => {
+                              draft.scenarioFlow[rowIndex].investigations = arrayFromTextarea(value);
+                            })
+                          }
+                        />
+                        <LabeledTextArea
+                          label="Expected actions"
+                          path={`scenarioFlow.${rowIndex}.expectedActions`}
+                          value={textareaFromArray(row.expectedActions)}
+                          isFieldLocked={isFieldLocked}
+                          onFieldFocus={setSelectedFieldPath}
+                          onChange={(value) =>
+                            updateScenario((draft) => {
+                              draft.scenarioFlow[rowIndex].expectedActions = arrayFromTextarea(value);
+                            })
+                          }
+                        />
+                        <LabeledTextArea
+                          label="Remarks"
+                          path={`scenarioFlow.${rowIndex}.remarks`}
+                          value={textareaFromArray(row.remarks)}
+                          isFieldLocked={isFieldLocked}
+                          onFieldFocus={setSelectedFieldPath}
+                          onChange={(value) =>
+                            updateScenario((draft) => {
+                              draft.scenarioFlow[rowIndex].remarks = arrayFromTextarea(value);
+                            })
+                          }
+                        />
+                        <LabeledTextArea
+                          label="Instructor control"
+                          path={`scenarioFlow.${rowIndex}.instructorControl`}
+                          value={textareaFromArray(row.instructorControl)}
+                          isFieldLocked={isFieldLocked}
+                          onFieldFocus={setSelectedFieldPath}
+                          onChange={(value) =>
+                            updateScenario((draft) => {
+                              draft.scenarioFlow[rowIndex].instructorControl = arrayFromTextarea(value);
+                            })
+                          }
+                        />
+                        <label className="text-xs font-medium uppercase tracking-wide text-slate-600">
+                          Transition rule
+                          <select
+                            className={`mt-1 w-full rounded-md border px-2 py-1 text-sm ${
+                              isFieldLocked(`scenarioFlow.${rowIndex}.transitionRule`)
+                                ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                                : "border-slate-300"
+                            }`}
+                            value={row.transitionRule || "next"}
+                            disabled={isFieldLocked(`scenarioFlow.${rowIndex}.transitionRule`)}
+                            onFocus={() => setSelectedFieldPath(`scenarioFlow.${rowIndex}.transitionRule`)}
+                            onChange={(event) =>
+                              updateScenario((draft) => {
+                                draft.scenarioFlow[rowIndex].transitionRule = event.target.value;
+                              })
+                            }
+                          >
+                            <option value="next">next</option>
+                            <option value="auto">auto</option>
+                            <option value="handler">handler</option>
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                  );
+                  })}
+                </div>
+              </section>
+
+              <section
+                id="equipment"
+                ref={(element) => {
+                  sectionRefs.current.equipment = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="10. Equipment"
+                  onFill={() => runFillSection("equipment")}
+                  loading={busySection === "equipment"}
+                  locked={lockedSections.equipment}
+                />
+                <div className="mb-3 flex justify-end">
+                  <button
+                    type="button"
+                    className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium"
+                    disabled={lockedSections.equipment}
+                    onClick={() =>
+                      updateScenario((draft) => {
+                        draft.equipment.push({ category: "", item: "", quantity: "", remarks: "" });
+                      })
+                    }
+                  >
+                    + Add equipment row
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-slate-100">
+                        <th className="border border-slate-300 px-2 py-1 text-left">Category</th>
+                        <th className="border border-slate-300 px-2 py-1 text-left">Item</th>
+                        <th className="border border-slate-300 px-2 py-1 text-left">Qty</th>
+                        <th className="border border-slate-300 px-2 py-1 text-left">Remarks</th>
+                        <th className="border border-slate-300 px-2 py-1 text-left">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scenario.equipment.map((item, index) => (
+                        <tr key={`equipment-${index}`}>
+                          <td className="border border-slate-300 p-1 align-top">
+                            <textarea
+                              rows={2}
+                              className={`min-h-[64px] w-full resize-y rounded border px-2 py-1 leading-relaxed ${
+                                isFieldLocked(`equipment.${index}.category`)
+                                  ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                                  : "border-slate-300"
+                              }`}
+                              value={item.category}
+                              disabled={isFieldLocked(`equipment.${index}.category`)}
+                              onFocus={() => setSelectedFieldPath(`equipment.${index}.category`)}
+                              onChange={(event) =>
+                                updateScenario((draft) => {
+                                  draft.equipment[index].category = event.target.value;
+                                })
+                              }
+                            />
+                          </td>
+                          <td className="border border-slate-300 p-1 align-top">
+                            <textarea
+                              rows={3}
+                              className={`min-h-[84px] w-full resize-y rounded border px-2 py-1 leading-relaxed ${
+                                isFieldLocked(`equipment.${index}.item`)
+                                  ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                                  : "border-slate-300"
+                              }`}
+                              value={item.item}
+                              disabled={isFieldLocked(`equipment.${index}.item`)}
+                              onFocus={() => setSelectedFieldPath(`equipment.${index}.item`)}
+                              onChange={(event) =>
+                                updateScenario((draft) => {
+                                  draft.equipment[index].item = event.target.value;
+                                })
+                              }
+                            />
+                          </td>
+                          <td className="border border-slate-300 p-1 align-top">
+                            <input
+                              className={`w-full rounded border px-2 py-1 ${
+                                isFieldLocked(`equipment.${index}.quantity`)
+                                  ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                                  : "border-slate-300"
+                              }`}
+                              value={item.quantity || ""}
+                              disabled={isFieldLocked(`equipment.${index}.quantity`)}
+                              onFocus={() => setSelectedFieldPath(`equipment.${index}.quantity`)}
+                              onChange={(event) =>
+                                updateScenario((draft) => {
+                                  draft.equipment[index].quantity = event.target.value;
+                                })
+                              }
+                            />
+                          </td>
+                          <td className="border border-slate-300 p-1 align-top">
+                            <textarea
+                              rows={3}
+                              className={`min-h-[84px] w-full resize-y rounded border px-2 py-1 leading-relaxed ${
+                                isFieldLocked(`equipment.${index}.remarks`)
+                                  ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                                  : "border-slate-300"
+                              }`}
+                              value={item.remarks || ""}
+                              disabled={isFieldLocked(`equipment.${index}.remarks`)}
+                              onFocus={() => setSelectedFieldPath(`equipment.${index}.remarks`)}
+                              onChange={(event) =>
+                                updateScenario((draft) => {
+                                  draft.equipment[index].remarks = event.target.value;
+                                })
+                              }
+                            />
+                          </td>
+                          <td className="border border-slate-300 p-1 align-top">
+                            <button
+                              type="button"
+                              className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700"
+                              disabled={scenario.equipment.length <= 1 || lockedSections.equipment}
+                              onClick={() =>
+                                updateScenario((draft) => {
+                                  if (draft.equipment.length <= 1) return;
+                                  draft.equipment.splice(index, 1);
+                                })
+                              }
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section
+                id="debriefInfo"
+                ref={(element) => {
+                  sectionRefs.current.debriefInfo = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="11. Debrief Information"
+                  onFill={() => runFillSection("debriefInfo")}
+                  loading={busySection === "debriefInfo"}
+                  locked={lockedSections.debriefInfo}
+                />
+                <RecordEditor
+                  sectionKey="debriefInfo"
+                  record={scenario.debriefInfo}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(key, value) =>
+                    updateScenario((draft) => {
+                      (draft.debriefInfo as unknown as Record<string, string>)[key] = value as string;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="simulatorPrep"
+                ref={(element) => {
+                  sectionRefs.current.simulatorPrep = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="12. Simulator / SP / Task Trainer Preparation"
+                  onFill={() => runFillSection("simulatorPrep")}
+                  loading={busySection === "simulatorPrep"}
+                  locked={lockedSections.simulatorPrep}
+                />
+                <ArrayEditor
+                  sectionKey="simulatorPrep"
+                  items={scenario.simulatorPrep}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(items) =>
+                    updateScenario((draft) => {
+                      draft.simulatorPrep = items;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="monitorSetup"
+                ref={(element) => {
+                  sectionRefs.current.monitorSetup = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="13. Patient Monitor Setup"
+                  onFill={() => runFillSection("monitorSetup")}
+                  loading={busySection === "monitorSetup"}
+                  locked={lockedSections.monitorSetup}
+                />
+
+                <div className="mb-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Monitor Layout</p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {ALLOWED_MONITOR_LAYOUTS.map((layout) => (
+                      <label
+                        key={layout}
+                        className={`flex items-center gap-2 rounded border px-2 py-1 text-sm ${
+                          isFieldLocked("monitorSetup.layout")
+                            ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                            : "border-slate-300"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={scenario.monitorSetup.layout.includes(layout)}
+                          disabled={isFieldLocked("monitorSetup.layout")}
+                          onFocus={() => setSelectedFieldPath("monitorSetup.layout")}
+                          onChange={(event) =>
+                            updateScenario((draft) => {
+                              const set = new Set(draft.monitorSetup.layout);
+                              if (event.target.checked) {
+                                set.add(layout);
+                              } else {
+                                set.delete(layout);
+                              }
+                              draft.monitorSetup.layout = [...set];
+                            })
+                          }
+                        />
+                        {layout}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Monitor Parameters</p>
+                  <div className="max-h-64 overflow-y-auto rounded border border-slate-300 p-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {ALLOWED_MONITOR_PARAMETERS.map((parameter) => (
+                        <label
+                          key={parameter}
+                          className={`flex items-center gap-2 rounded border px-2 py-1 text-sm ${
+                            isFieldLocked("monitorSetup.parameters")
+                              ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
+                              : "border-slate-200"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={scenario.monitorSetup.parameters.includes(parameter)}
+                            disabled={isFieldLocked("monitorSetup.parameters")}
+                            onFocus={() => setSelectedFieldPath("monitorSetup.parameters")}
+                            onChange={(event) =>
+                              updateScenario((draft) => {
+                                const set = new Set(draft.monitorSetup.parameters);
+                                if (event.target.checked) {
+                                  set.add(parameter);
+                                } else {
+                                  set.delete(parameter);
+                                }
+                                draft.monitorSetup.parameters = [...set];
+                              })
+                            }
+                          />
+                          {parameter}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                id="documentInfo"
+                ref={(element) => {
+                  sectionRefs.current.documentInfo = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <SectionHeader
+                  title="14. Document Information"
+                  onFill={() => runFillSection("documentInfo")}
+                  loading={busySection === "documentInfo"}
+                  locked={lockedSections.documentInfo}
+                />
+                <RecordEditor
+                  sectionKey="documentInfo"
+                  record={scenario.documentInfo}
+                  isFieldLocked={isFieldLocked}
+                  onFieldFocus={setSelectedFieldPath}
+                  onChange={(key, value) =>
+                    updateScenario((draft) => {
+                      const nextValue =
+                        (key === "dateScenarioDeveloped" || key === "dateScenarioUpdated") && typeof value === "string"
+                          ? normalizeToDmyDate(value)
+                          : (value as string);
+                      (draft.documentInfo as unknown as Record<string, string>)[key] = nextValue;
+                    })
+                  }
+                />
+              </section>
+
+              <section
+                id="appendixImages"
+                ref={(element) => {
+                  sectionRefs.current.appendixImages = element;
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <h2 className="text-base font-semibold">15. Simulation Images</h2>
+                <p className="mt-1 text-sm text-slate-700">
+                  Generate Singapore-context medical simulation images for this scenario, refine them iteratively, then save selected images into the DOCX appendix.
+                </p>
+
+                <label className="mt-3 block text-xs font-medium uppercase tracking-wide text-slate-600">
+                  Image prompt
+                  <textarea
+                    className="mt-1 h-24 w-full rounded-md border border-slate-300 p-2 text-sm normal-case"
+                      value={imagePrompt}
+                      onChange={(event) => setImagePrompt(event.target.value)}
+                      placeholder="Example: Singapore ED resus bay team treating severe status asthmaticus with intubation setup, realistic monitor and airway cart."
+                    />
+                  </label>
+
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <label className="text-xs font-medium uppercase tracking-wide text-slate-600">
+                    Size
+                    <select
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm normal-case"
+                      value={imageSize}
+                      onChange={(event) =>
+                        setImageSize(event.target.value as "1024x1024" | "1536x1024" | "1024x1536" | "auto")
+                      }
+                    >
+                      <option value="1536x1024">1536x1024 (landscape)</option>
+                      <option value="1024x1536">1024x1536 (portrait)</option>
+                      <option value="1024x1024">1024x1024 (square)</option>
+                      <option value="auto">auto</option>
+                    </select>
+                  </label>
+                  <label className="text-xs font-medium uppercase tracking-wide text-slate-600">
+                    Quality
+                    <select
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm normal-case"
+                      value={imageQuality}
+                      onChange={(event) => setImageQuality(event.target.value as "low" | "medium" | "high" | "auto")}
+                    >
+                      <option value="high">high</option>
+                      <option value="medium">medium</option>
+                      <option value="low">low</option>
+                      <option value="auto">auto</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={imageBusy}
+                    className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                    onClick={() => runGenerateImage("new")}
+                  >
+                    {imageBusy ? "Generating..." : "Generate New Image"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={imageBusy || !latestRefinementSource}
+                    className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium disabled:opacity-50"
+                    onClick={() => runGenerateImage("refine", latestRefinementSource?.dataUrl)}
+                  >
+                    Refine Latest Image
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
+                    onClick={() => setImagePrompt("")}
+                  >
+                    Start New Prompt
+                  </button>
+                </div>
+
+                {generatedImages.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Generated Images (unsaved)</p>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {generatedImages.map((image) => (
+                        <article key={image.id} className="rounded-xl border border-slate-300 bg-slate-50 p-3">
+                          <Image
+                            src={image.dataUrl}
+                            alt={image.revisedPrompt || image.prompt || "Generated simulation image"}
+                            width={640}
+                            height={352}
+                            unoptimized
+                            className="h-44 w-full rounded-md border border-slate-200 object-cover"
+                          />
+                          <p className="mt-2 line-clamp-3 text-xs text-slate-700">{image.revisedPrompt || image.prompt}</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              className="rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white"
+                              onClick={() => saveGeneratedImage(image)}
+                            >
+                              Save to Scenario
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                              onClick={() => runGenerateImage("refine", image.dataUrl)}
+                            >
+                              Refine This
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
+                              onClick={() => setGeneratedImages((current) => current.filter((item) => item.id !== image.id))}
+                            >
+                              Discard
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Saved Appendix Images ({scenario.appendixImages.length})
+                  </p>
+                  {scenario.appendixImages.length === 0 ? (
+                    <p className="text-sm text-slate-600">No saved images yet.</p>
+                  ) : (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {scenario.appendixImages.map((image, index) => {
+                        const captionPath = `appendixImages.${index}.caption`;
+                        const captionLocked = isFieldLocked(captionPath);
+                        const captionDraftKey = image.id || `appendix-${index}`;
+                        const captionValue = captionDrafts[captionDraftKey] ?? image.caption;
+                        const hasUnsavedCaption = captionValue !== image.caption;
+
+                        return (
+                          <article key={image.id || `appendix-${index}`} className="rounded-xl border border-slate-300 bg-white p-3">
+                            <Image
+                              src={image.dataUrl}
+                              alt={image.caption || image.revisedPrompt || image.prompt || "Saved appendix image"}
+                              width={640}
+                              height={352}
+                              unoptimized
+                              className="h-44 w-full rounded-md border border-slate-200 object-cover"
+                            />
+                            <label className="mt-2 block text-xs font-medium uppercase tracking-wide text-slate-600">
+                              Caption
+                              <textarea
+                                className={`mt-1 h-16 w-full rounded-md border p-2 text-sm normal-case ${
+                                  captionLocked ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100" : "border-slate-300"
+                                }`}
+                                value={captionValue}
+                                disabled={captionLocked}
+                                onFocus={() => setSelectedFieldPath(captionPath)}
+                                onChange={(event) =>
+                                  setCaptionDrafts((current) => ({
+                                    ...current,
+                                    [captionDraftKey]: event.target.value,
+                                  }))
+                                }
+                              />
+                            </label>
+                            <p className="mt-1 line-clamp-3 text-xs text-slate-700">{image.revisedPrompt || image.prompt}</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                disabled={captionLocked || !hasUnsavedCaption}
+                                className="rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white disabled:opacity-50"
+                                onClick={() => {
+                                  updateScenario((draft) => {
+                                    if (!draft.appendixImages[index]) return;
+                                    draft.appendixImages[index].caption = captionValue;
+                                  });
+                                  setCaptionDrafts((current) => {
+                                    if (!(captionDraftKey in current)) return current;
+                                    const next = { ...current };
+                                    delete next[captionDraftKey];
+                                    return next;
+                                  });
+                                  setStatusMessage("Image caption saved.");
+                                }}
+                              >
+                                Save Caption
+                              </button>
+                              <button
+                                type="button"
+                                disabled={!hasUnsavedCaption}
+                                className="rounded-md border border-slate-300 px-2 py-1 text-xs disabled:opacity-50"
+                                onClick={() =>
+                                  setCaptionDrafts((current) => {
+                                    if (!(captionDraftKey in current)) return current;
+                                    const next = { ...current };
+                                    delete next[captionDraftKey];
+                                    return next;
+                                  })
+                                }
+                              >
+                                Discard Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                                onClick={() => runGenerateImage("refine", image.dataUrl)}
+                              >
+                                Refine From This
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
+                                onClick={() => removeSavedImage(index)}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
+            </main>
+
+            {showRightSidebar ? (
+              <aside className="sticky top-4 max-h-[calc(100vh-2rem)] space-y-4 overflow-y-auto rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">AI Controls</h3>
+                  <div className="mt-2 space-y-2">
+                    <label className="block text-xs font-medium uppercase tracking-wide text-slate-600">
+                      Thinking depth: {thinkingDepth}
+                      <input
+                        type="range"
+                        min={0}
+                        max={2}
+                        step={1}
+                        value={thinkingDepth}
+                        onChange={(event) => setThinkingDepth(Number(event.target.value) as ThinkingDepth)}
+                        className="mt-1 w-full"
+                      />
+                      <span className="mt-1 block normal-case text-[11px] text-slate-500">
+                        0 = instant, 1 = low reasoning, 2 = medium reasoning
+                      </span>
+                    </label>
+
+                    <div className="space-y-2">
+                      {mode === "worksheet_assist" ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                          onClick={runGenerate}
+                        >
+                          {busy ? "Working..." : "Fill Missing (Whole Form)"}
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={busy || lockedSectionCount === SECTION_LIST.length}
+                        className="w-full rounded-md border border-slate-900 px-3 py-2 text-sm font-medium text-slate-900 disabled:opacity-50"
+                        onClick={openUpdateUnlockedDialog}
+                      >
+                        {busy ? "Working..." : "Update Unlocked with AI"}
+                      </button>
+                      <button
+                        type="button"
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
+                        onClick={runValidate}
+                      >
+                        Validate
+                      </button>
+                      <button
+                        type="button"
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
+                        onClick={runExport}
+                      >
+                        Export DOCX
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy || imageBusy}
+                        className="w-full rounded-md border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 disabled:opacity-50"
+                        onClick={resetAll}
+                      >
+                        Reset All
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+                    Section Locks ({lockedSectionCount}/{SECTION_LIST.length})
+                  </h3>
+                  <div className="mt-2 max-h-52 space-y-1 overflow-y-auto rounded-md border border-slate-200 p-2">
+                    {SECTION_LIST.map((section) => {
+                      const locked = lockedSections[section.key];
+                      return (
+                        <button
+                          key={`lock-${section.key}`}
+                          type="button"
+                          className={`w-full rounded px-2 py-1 text-left text-xs ${
+                            locked ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"
+                          }`}
+                          onClick={() => toggleSectionLock(section.key)}
+                        >
+                          {locked ? "[Locked] " : "[Open] "}
+                          {section.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-2 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                    onClick={() => setLockedSections(buildSectionLockState(false))}
+                  >
+                    Unlock all sections
+                  </button>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+                    Scenario Flow State Locks ({lockedScenarioFlowStateCount})
+                  </h3>
+                  <p className="mt-2 text-xs text-slate-600">Use each state card to lock/unlock State 1, 2, 3, etc.</p>
+                  <div className="mt-2 max-h-32 space-y-1 overflow-y-auto rounded-md border border-slate-200 p-2">
+                    {scenario.scenarioFlow.length === 0 ? (
+                      <p className="text-xs text-slate-600">No scenario flow states.</p>
+                    ) : (
+                      scenario.scenarioFlow.map((_, index) => {
+                        const locked = Boolean(lockedScenarioFlowStates[index]);
+                        return (
+                          <div
+                            key={`state-lock-summary-${index}`}
+                            className={`rounded px-2 py-1 text-xs ${
+                              locked ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            {locked ? "[Locked]" : "[Open]"} State {index + 1}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-2 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                    onClick={() => setLockedScenarioFlowStates({})}
+                  >
+                    Unlock all states
+                  </button>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Field Locks ({lockedFieldCount})</h3>
+                  <p className="mt-2 text-xs text-slate-600">Click any field in the form to select it here.</p>
+                  <div className="mt-2 rounded-md border border-slate-300 bg-slate-50 px-2 py-1 text-xs">
+                    <span className="font-semibold text-slate-700">Selected field: </span>
+                    <span className="text-slate-800">{selectedFieldPath ? fieldLabelByPath.get(selectedFieldPath) || selectedFieldPath : "None"}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      disabled={!selectedFieldPath}
+                      onClick={() => lockField(selectedFieldPath)}
+                    >
+                      Lock selected
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      disabled={!selectedFieldPath}
+                      onClick={() => unlockField(selectedFieldPath)}
+                    >
+                      Unlock selected
+                    </button>
+                  </div>
+                  <div className="mt-2 max-h-28 space-y-1 overflow-y-auto rounded-md border border-slate-200 p-2">
+                    {Object.keys(lockedFields).length === 0 ? (
+                      <p className="text-xs text-slate-600">No locked fields.</p>
+                    ) : (
+                      Object.keys(lockedFields).map((path) => (
+                        <div key={path} className="flex items-center justify-between gap-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                          <span className="truncate">{fieldLabelByPath.get(path) || path}</span>
+                          <button type="button" className="rounded border border-amber-300 px-1.5 py-0.5" onClick={() => unlockField(path)}>
+                            Unlock
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-2 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                    onClick={() => setLockedFields({})}
+                  >
+                    Clear all field locks
+                  </button>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Validation Warnings</h3>
+                  <div className="mt-2 max-h-56 space-y-2 overflow-y-auto">
+                    {warnings.length === 0 ? (
+                      <p className="text-xs text-slate-600">No validation warnings.</p>
+                    ) : (
+                      warnings.map((warning, index) => (
+                        <div key={`${warning.code}-${index}`} className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs">
+                          <p className="font-semibold text-amber-900">{warning.code}</p>
+                          <p className="mt-1 text-amber-800">{warning.message}</p>
+                          {warning.suggestedAlternatives?.length ? (
+                            <p className="mt-1 text-amber-700">Try: {warning.suggestedAlternatives.join(", ")}</p>
+                          ) : null}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Source Grounding</h3>
+                  <div className="mt-2 max-h-48 space-y-2 overflow-y-auto">
+                    {citations.length === 0 ? (
+                      <p className="text-xs text-slate-600">No citations captured yet.</p>
+                    ) : (
+                      citations.map((citation, index) => (
+                        <div key={`${citation.source}-${index}`} className="rounded-md border border-slate-300 bg-slate-50 p-2 text-xs">
+                          <p className="font-semibold text-slate-800">{citation.source}</p>
+                          {citation.excerpt ? <p className="mt-1 text-slate-700">{citation.excerpt}</p> : null}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </aside>
+            ) : null}
+          </div>
+        )}
+      </div>
+
+      {updateDialogOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+          <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <h2 className="text-lg font-semibold">Update Unlocked with AI</h2>
+            <p className="mt-2 text-sm text-slate-700">
+              Add any extra instructions on what you want AI to improve or focus on for unlocked fields.
+            </p>
+            <textarea
+              className="mt-3 h-36 w-full rounded-md border border-slate-300 p-2 text-sm"
+              value={updateDialogPrompt}
+              onChange={(event) => setUpdateDialogPrompt(event.target.value)}
+              placeholder="Example: Strengthen hemodynamic progression, add clearer trigger points for state transitions, and include communication cues for nursing handover."
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                onClick={() => setUpdateDialogOpen(false)}
+                disabled={busy}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                onClick={submitUpdateUnlockedDialog}
+                disabled={busy}
+              >
+                {busy ? "Updating..." : "Run Update"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+type SectionHeaderProps = {
+  title: string;
+  loading: boolean;
+  locked: boolean;
+  onFill: () => void;
+};
+
+function SectionHeader({ title, loading, locked, onFill }: SectionHeaderProps) {
+  return (
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <h2 className="text-base font-semibold">{title}</h2>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium"
+          disabled={loading || locked}
+          onClick={onFill}
+        >
+          {loading ? "AI filling..." : "AI Fill Section"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type RecordEditorProps = {
+  sectionKey: SectionKey;
+  record: object;
+  isFieldLocked: (path: string) => boolean;
+  onFieldFocus: (path: string) => void;
+  onChange: (key: string, value: string | boolean) => void;
+};
+
+function RecordEditor({ sectionKey, record, isFieldLocked, onFieldFocus, onChange }: RecordEditorProps) {
+  const editableRecord = record as Record<string, string | boolean>;
+
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {Object.entries(editableRecord).map(([key, value]) => {
+        const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
+        const fieldPath = `${sectionKey}.${key}`;
+        const locked = isFieldLocked(fieldPath);
+        const isDocumentDateField =
+          sectionKey === "documentInfo" && (key === "dateScenarioDeveloped" || key === "dateScenarioUpdated");
+
+        if (typeof value === "boolean") {
+          return (
+            <div
+              key={key}
+              className={`rounded-md border px-3 py-2 text-sm ${
+                locked ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100" : "border-slate-300"
+              }`}
+            >
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={value}
+                  disabled={locked}
+                  onFocus={() => onFieldFocus(fieldPath)}
+                  onChange={(event) => onChange(key, event.target.checked)}
+                />
+                {label}
+              </label>
+            </div>
+          );
+        }
+
+        return (
+          <label key={key} className="text-xs font-medium uppercase tracking-wide text-slate-600">
+            {label}
+            <textarea
+              className={`mt-1 h-16 w-full rounded-md border p-2 text-sm normal-case ${
+                locked ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100" : "border-slate-300"
+              }`}
+              value={value}
+              disabled={locked}
+              onFocus={() => onFieldFocus(fieldPath)}
+              onChange={(event) => onChange(key, event.target.value)}
+              placeholder={isDocumentDateField ? "DD/MM/YYYY" : undefined}
+            />
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+type ArrayEditorProps = {
+  sectionKey: SectionKey;
+  items: string[];
+  isFieldLocked: (path: string) => boolean;
+  onFieldFocus: (path: string) => void;
+  onChange: (items: string[]) => void;
+};
+
+function ArrayEditor({ sectionKey, items, isFieldLocked, onFieldFocus, onChange }: ArrayEditorProps) {
+  const locked = isFieldLocked(sectionKey);
+
+  return (
+    <div>
+      <textarea
+        className={`h-28 w-full rounded-md border p-2 text-sm ${
+          locked ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100" : "border-slate-300"
+        }`}
+        value={textareaFromArray(items)}
+        disabled={locked}
+        onFocus={() => onFieldFocus(sectionKey)}
+        onChange={(event) => onChange(arrayFromTextarea(event.target.value))}
+        placeholder="One entry per line"
+      />
+      <div className="mt-2 flex justify-end">
+        <button
+          type="button"
+          className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+          disabled={locked}
+          onClick={() => onChange([...items, ""])}
+        >
+          Add row
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type LabeledTextAreaProps = {
+  label: string;
+  path: string;
+  value: string;
+  isFieldLocked: (path: string) => boolean;
+  onFieldFocus: (path: string) => void;
+  onChange: (value: string) => void;
+};
+
+function LabeledTextArea({ label, path, value, isFieldLocked, onFieldFocus, onChange }: LabeledTextAreaProps) {
+  const locked = isFieldLocked(path);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [value]);
+
+  return (
+    <label className="text-xs font-medium uppercase tracking-wide text-slate-600">
+      {label}
+      <textarea
+        ref={textareaRef}
+        className={`mt-1 min-h-[96px] w-full rounded-md border p-2 text-sm leading-relaxed normal-case ${
+          locked ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100" : "border-slate-300"
+        }`}
+        style={{ overflow: "hidden", resize: "none" }}
+        value={value}
+        disabled={locked}
+        onFocus={() => onFieldFocus(path)}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}

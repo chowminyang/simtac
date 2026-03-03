@@ -1,0 +1,9 @@
+### Ran Playwright code
+```js
+await page.locator('#patientInfo > .mb-3 > .flex > .rounded-md.border.px-2.py-1.text-xs.font-medium.border-slate-300.text-slate-700').click();
+```
+### Page
+- Page URL: http://127.0.0.1:3000/
+- Page Title: SIMTAC AI Scenario Builder
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-03-02T14-01-47-443Z.yml)

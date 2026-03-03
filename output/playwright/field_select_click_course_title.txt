@@ -1,0 +1,9 @@
+### Ran Playwright code
+```js
+await page.getByRole('textbox', { name: 'Course Title' }).click();
+```
+### Page
+- Page URL: http://127.0.0.1:3000/
+- Page Title: SIMTAC AI Scenario Builder
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-03-02T14-13-18-798Z.yml)

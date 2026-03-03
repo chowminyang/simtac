@@ -1,0 +1,15 @@
+### Browser `default` opened with pid 28851.
+- default:
+  - browser-type: chrome
+  - user-data-dir: <in-memory>
+  - headed: false
+---
+### Ran Playwright code
+```js
+await page.goto('http://127.0.0.1:3000');
+```
+### Page
+- Page URL: http://127.0.0.1:3000/
+- Page Title: SIMTAC AI Scenario Builder
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-03-02T13-38-41-684Z.yml)

@@ -1,0 +1,5 @@
+52:              - text: Course Title
+53:              - textbox "Course Title" [ref=e71]
+445:          - heading "Field Locks (0)" [level=3] [ref=e403]
+447:          - generic [ref=e405]: "Selected field: None"
+449:            - button "Lock selected" [disabled] [ref=e407]

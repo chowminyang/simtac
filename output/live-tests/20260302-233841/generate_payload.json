@@ -1,0 +1,5 @@
+{
+  "mode": "ai_prompt",
+  "prompt": "Create an adult emergency department simulation scenario for status asthmaticus progressing to near-fatal asthma with dynamic deterioration and recovery after appropriate management. Include clear state transitions, expected team actions, SimMan-compatible sounds/capabilities, and debrief points.",
+  "config": { "thinkingDepth": 1 }
+}

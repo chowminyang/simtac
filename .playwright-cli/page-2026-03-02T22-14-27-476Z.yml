@@ -1,0 +1,17 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e9]
+  - generic [ref=e11]:
+    - banner [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - heading "SIMTAC AI Scenario Builder" [level=1] [ref=e15]
+          - paragraph [ref=e16]: Generate and refine medical simulation scenarios with strict SimMan capability checks and direct DOCX export.
+          - paragraph [ref=e17]: Ready.
+        - img "Tan Tock Seng Hospital logo" [ref=e18]
+    - generic [ref=e19]:
+      - button "Create with AI Describe a scenario in free text and let AI build a complete SIMTAC worksheet." [ref=e20]:
+        - heading "Create with AI" [level=2] [ref=e21]
+        - paragraph [ref=e22]: Describe a scenario in free text and let AI build a complete SIMTAC worksheet.
+      - button "Fill Worksheet Fill key worksheet fields manually and use AI to complete missing sections." [ref=e23]:
+        - heading "Fill Worksheet" [level=2] [ref=e24]
+        - paragraph [ref=e25]: Fill key worksheet fields manually and use AI to complete missing sections.

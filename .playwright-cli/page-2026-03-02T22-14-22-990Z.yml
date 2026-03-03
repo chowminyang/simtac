@@ -1,0 +1,9 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - heading "SIMTAC Access" [level=1] [ref=e4]
+    - paragraph [ref=e5]: Enter the site password to continue.
+    - generic [ref=e6]:
+      - text: Password
+      - textbox "Password" [active] [ref=e7]
+    - button "Unlock Site" [ref=e8]
+  - alert [ref=e9]

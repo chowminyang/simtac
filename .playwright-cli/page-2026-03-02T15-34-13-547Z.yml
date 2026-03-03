@@ -1,0 +1,697 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e14] [cursor=pointer]:
+    - img [ref=e15]
+  - alert [ref=e18]
+  - generic [ref=e20]:
+    - banner [ref=e21]:
+      - heading "SIMTAC AI Scenario Builder" [level=1] [ref=e22]
+      - paragraph [ref=e23]: Generate and refine medical simulation scenarios with strict SimMan capability checks and direct DOCX export.
+      - paragraph [ref=e24]: Unlocked sections updated.
+    - generic [ref=e32]:
+      - complementary [ref=e33]:
+        - button "Back to mode selection" [ref=e34]
+        - list [ref=e35]:
+          - listitem [ref=e36]:
+            - button "1. Course & Trainee" [ref=e37]
+          - listitem [ref=e38]:
+            - button "2. Learning Objectives" [ref=e39]
+          - listitem [ref=e40]:
+            - button "3. Clinical Setting" [ref=e41]
+          - listitem [ref=e42]:
+            - button "4. Instructors" [ref=e43]
+          - listitem [ref=e44]:
+            - button "5. Confederates" [ref=e45]
+          - listitem [ref=e46]:
+            - button "6. Trainee Roles" [ref=e47]
+          - listitem [ref=e48]:
+            - button "7. Patient Information" [ref=e49]
+          - listitem [ref=e50]:
+            - button "8. Scenario Information" [ref=e51]
+          - listitem [ref=e52]:
+            - button "9. Scenario Flow" [ref=e53]
+          - listitem [ref=e54]:
+            - button "10. Equipment" [ref=e55]
+          - listitem [ref=e56]:
+            - button "11. Debrief Info" [ref=e57]
+          - listitem [ref=e58]:
+            - button "12. Simulator Prep" [ref=e59]
+          - listitem [ref=e60]:
+            - button "13. Monitor Setup" [ref=e61]
+          - listitem [ref=e62]:
+            - button "14. Document Info" [ref=e63]
+          - listitem [ref=e64]:
+            - button "15. Simulation Images" [ref=e65]
+      - main [ref=e66]:
+        - generic [ref=e67]:
+          - heading "Scenario Prompt" [level=2] [ref=e68]
+          - textbox "Describe your scenario goals, progression, expected learner actions, and clinical context..." [ref=e69]: "Create an adult emergency department scenario: septic shock from obstructive pyelonephritis progressing to hypotension and altered mental status. Include 4 scenario states with clear triggers, expected team actions, SimMan-compatible findings, debrief points, and realistic monitor progression."
+          - button "Generate Scenario" [ref=e651]
+        - generic [ref=e72]:
+          - heading "15. Simulation Images (Appendix)" [level=2] [ref=e73]
+          - paragraph [ref=e74]: Generate medical images for this scenario, refine them iteratively, then save selected images into the DOCX appendix.
+          - generic [ref=e75]:
+            - text: Image prompt
+            - textbox "Image prompt" [ref=e76]:
+              - /placeholder: "Example: Emergency department team treating severe status asthmaticus with intubation setup, realistic monitor and airway cart."
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - text: Image model
+              - textbox "Image model" [ref=e79]: gpt-image-1.5
+            - generic [ref=e80]:
+              - text: Size
+              - combobox "Size" [ref=e81]:
+                - option "1536x1024 (landscape)" [selected]
+                - option "1024x1536 (portrait)"
+                - option "1024x1024 (square)"
+                - option "auto"
+            - generic [ref=e82]:
+              - text: Quality
+              - combobox "Quality" [ref=e83]:
+                - option "high"
+                - option "medium" [selected]
+                - option "low"
+                - option "auto"
+          - generic [ref=e84]:
+            - button "Generate New Image" [ref=e85]
+            - button "Refine Latest Image" [disabled] [ref=e86]
+            - button "Start New Prompt" [ref=e87]
+          - generic [ref=e88]:
+            - paragraph [ref=e89]: Saved Appendix Images (0)
+            - paragraph [ref=e90]: No saved images yet.
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - heading "1. Course & Trainee Information" [level=2] [ref=e93]
+            - generic [ref=e94]:
+              - button "Lock" [ref=e95]
+              - button "AI Fill Section" [ref=e96]
+          - generic [ref=e97]:
+            - generic [ref=e98]:
+              - text: Course Title
+              - textbox "Course Title" [ref=e99]: "Emergency Department High-Acuity Resuscitation: Sepsis and Shock"
+            - generic [ref=e100]:
+              - text: Department
+              - textbox "Department" [ref=e101]: Emergency Medicine
+            - generic [ref=e102]:
+              - text: Scenario Title
+              - textbox "Scenario Title" [ref=e103]: Septic Shock from Obstructive Pyelonephritis with Worsening Hypotension and Altered Mental Status
+            - generic [ref=e104]:
+              - text: Target Learner Group
+              - textbox "Target Learner Group" [ref=e105]: EM residents/registrars, ED nurses, RTs (interprofessional team)
+            - generic [ref=e106]:
+              - text: Number Of Trainees
+              - textbox "Number Of Trainees" [ref=e107]: 4-6
+            - generic [ref=e108]:
+              - text: Number Of Instructors
+              - textbox "Number Of Instructors" [ref=e109]: 1-2
+            - generic [ref=e110]:
+              - text: Level Of Experience
+              - textbox "Level Of Experience" [ref=e111]: Intermediate
+            - generic [ref=e112]:
+              - text: Prerequisite Knowledge
+              - textbox "Prerequisite Knowledge" [ref=e113]: Sepsis-3 recognition, ED sepsis bundle, shock management, IV fluid resuscitation, vasopressor initiation, antibiotics and cultures timing, escalation for source control (urology/IR), team communication using closed-loop
+        - generic [ref=e114]:
+          - generic [ref=e115]:
+            - heading "2. Specific Learning Objectives" [level=2] [ref=e116]
+            - generic [ref=e117]:
+              - button "Lock" [ref=e118]
+              - button "AI Fill Section" [ref=e119]
+          - generic [ref=e120]:
+            - textbox "One entry per line" [ref=e121]: "Recognize sepsis progressing to septic shock and initiate evidence-based ED resuscitation (cultures, lactate, broad-spectrum antibiotics, fluids, vasopressors as indicated). Identify obstructive pyelonephritis as a time-critical source requiring urgent source control and coordinate urology/IR consultation. Demonstrate effective crisis resource management: role assignment, closed-loop communication, and structured updates to patient/family/consultants. Perform ongoing reassessment and safety management: response to fluids, early vasopressor use for persistent hypotension, glucose check, and escalation when mental status deteriorates."
+            - button "Add row" [ref=e123]
+        - generic [ref=e124]:
+          - generic [ref=e125]:
+            - heading "3. Clinical / Environment Setting" [level=2] [ref=e126]
+            - generic [ref=e127]:
+              - button "Lock" [ref=e128]
+              - button "AI Fill Section" [ref=e129]
+          - generic [ref=e130]: Setting required
+          - textbox [ref=e131]: Adult Emergency Department resuscitation bay with monitoring, IV pumps, oxygen delivery, and access to labs/imaging
+          - generic [ref=e132]: Remarks
+          - textbox [ref=e133]: SimMan in ED bed; team has access to sepsis order set, antibiotic list, and ability to call urology/ICU. Emphasize time stamps (antibiotics within 1 hour).
+        - generic [ref=e134]:
+          - generic [ref=e135]:
+            - heading "4. Instructor Information" [level=2] [ref=e136]
+            - generic [ref=e137]:
+              - button "Lock" [ref=e138]
+              - button "AI Fill Section" [ref=e139]
+          - generic [ref=e140]:
+            - textbox "One entry per line" [ref=e141]: Lead instructor (controls simulator/monitor trends and provides lab/imaging when requested) Assistant instructor/observer (assesses teamwork, prompts confederates, runs debrief)
+            - button "Add row" [ref=e143]
+        - generic [ref=e144]:
+          - generic [ref=e145]:
+            - heading "5. Confederate Information" [level=2] [ref=e146]
+            - generic [ref=e147]:
+              - button "Lock" [ref=e148]
+              - button "AI Fill Section" [ref=e149]
+          - generic [ref=e150]:
+            - textbox "One entry per line" [ref=e151]: ED bedside nurse (can prompt for allergies, IV access, medication administration, urine output) Family member/partner (provides collateral history; becomes concerned as mental status worsens) Urology/ICU consultant via phone (requires clear SBAR; provides source-control plan)
+            - button "Add row" [ref=e153]
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - heading "6. Trainees Role" [level=2] [ref=e156]
+            - generic [ref=e157]:
+              - button "Lock" [ref=e158]
+              - button "AI Fill Section" [ref=e159]
+          - generic [ref=e160]:
+            - textbox "One entry per line" [ref=e161]: Team leader (primary physician/registrar) Airway/respiratory clinician (O2, ventilation support planning; coordinates with RT if present) Procedure/vascular access clinician (second IV, blood cultures, Foley, considers IO if needed) Medication/fluids clinician (orders/administers antibiotics, fluids, starts vasopressors) Primary nurse role (vitals, reassessment, documentation, communication support)
+            - button "Add row" [ref=e163]
+        - generic [ref=e164]:
+          - generic [ref=e165]:
+            - heading "7. Patient Information" [level=2] [ref=e166]
+            - generic [ref=e167]:
+              - button "Lock" [ref=e168]
+              - button "AI Fill Section" [ref=e169]
+          - generic [ref=e170]:
+            - generic [ref=e171]:
+              - text: Name
+              - textbox "Name" [ref=e172]: Maria Gonzalez
+            - generic [ref=e174]:
+              - checkbox "Show On Monitor Before Start" [ref=e175]
+              - text: Show On Monitor Before Start
+            - generic [ref=e177]:
+              - checkbox "Make Available During Simulation" [ref=e178]
+              - text: Make Available During Simulation
+            - generic [ref=e179]:
+              - text: Identification No
+              - textbox "Identification No" [ref=e180]: ED-24-01987
+            - generic [ref=e181]:
+              - text: Race
+              - textbox "Race" [ref=e182]: Hispanic/Latina
+            - generic [ref=e183]:
+              - text: Age
+              - textbox "Age" [ref=e184]: "52"
+            - generic [ref=e185]:
+              - text: Gender
+              - textbox "Gender" [ref=e186]: Female
+            - generic [ref=e187]:
+              - text: Weight
+              - textbox "Weight" [ref=e188]: 78 kg
+            - generic [ref=e189]:
+              - text: Height
+              - textbox "Height" [ref=e190]: 165 cm
+            - generic [ref=e191]:
+              - text: Past Medical And Social History
+              - textbox "Past Medical And Social History" [ref=e192]: Type 2 diabetes mellitus; recurrent nephrolithiasis; hypertension. No prior ICU admissions. Lives with partner. No tobacco; occasional alcohol.
+            - generic [ref=e193]:
+              - text: Current Medications
+              - textbox "Current Medications" [ref=e194]: Metformin; lisinopril; PRN ibuprofen. No anticoagulants.
+            - generic [ref=e195]:
+              - text: Food Drug Allergies
+              - textbox "Food Drug Allergies" [ref=e196]: No known drug allergies (NKDA).
+            - generic [ref=e197]:
+              - text: Primary Care Provider
+              - textbox "Primary Care Provider" [ref=e198]: Community clinic physician
+            - generic [ref=e199]:
+              - text: Presenting Complaint History
+              - textbox "Presenting Complaint History" [ref=e200]: Brought to ED for 2 days of fever/chills, right flank pain, dysuria, nausea/vomiting, and reduced urine output. Today increasingly weak and confused. Took ibuprofen and minimal oral intake. Partner reports she has had kidney stones before and ‘couldn’t pass it’ this week.
+        - generic [ref=e201]:
+          - generic [ref=e202]:
+            - heading "8. Scenario Information" [level=2] [ref=e203]
+            - generic [ref=e204]:
+              - button "Lock" [ref=e205]
+              - button "AI Fill Section" [ref=e206]
+          - generic [ref=e207]:
+            - generic [ref=e208]:
+              - text: Time Allocated For Scenario
+              - textbox "Time Allocated For Scenario" [ref=e209]: 20 minutes
+            - generic [ref=e210]:
+              - text: Time Allocated For Debrief
+              - textbox "Time Allocated For Debrief" [ref=e211]: 25 minutes
+            - generic [ref=e212]:
+              - text: Scenario Summary
+              - textbox "Scenario Summary" [ref=e213]: Adult ED patient with obstructive pyelonephritis develops septic shock with hypotension and altered mental status. Learners must initiate sepsis bundle, reassess hemodynamics, start vasopressors for persistent hypotension, and coordinate urgent source control with urology/IR.
+            - generic [ref=e214]:
+              - text: Scenario Information To Trainees
+              - textbox "Scenario Information To Trainees" [ref=e215]: You are the ED resuscitation team receiving a febrile patient with flank pain and confusion. Manage per ED standards. You may request labs, cultures, imaging, and consults. Provide concise communication updates to nurse/family/consultants.
+            - generic [ref=e216]:
+              - text: Transition Mode
+              - textbox "Transition Mode" [ref=e217]: next
+        - generic [ref=e218]:
+          - generic [ref=e219]:
+            - heading "9. Scenario Flow" [level=2] [ref=e220]
+            - generic [ref=e221]:
+              - button "Lock" [ref=e222]
+              - button "AI Fill Section" [ref=e223]
+          - generic [ref=e224]:
+            - paragraph [ref=e225]: State-by-state simulator control and expected action flow.
+            - button "+ Add state" [ref=e226]
+          - generic [ref=e227]:
+            - generic [ref=e228]:
+              - generic [ref=e229]:
+                - paragraph [ref=e230]: State 1
+                - button "Remove" [ref=e231]
+              - generic [ref=e232]: State name
+              - textbox [ref=e233]: "State 1: Suspected Sepsis from Obstructive Pyelonephritis (initial ED assessment)"
+              - generic [ref=e234]:
+                - generic [ref=e235]:
+                  - generic [ref=e236]: bp
+                  - textbox "bp" [ref=e237]: 104/62
+                - generic [ref=e238]:
+                  - generic [ref=e239]: pr
+                  - textbox "pr" [ref=e240]: "118"
+                - generic [ref=e241]:
+                  - generic [ref=e242]: rr
+                  - textbox "rr" [ref=e243]: "24"
+                - generic [ref=e244]:
+                  - generic [ref=e245]: spo2
+                  - textbox "spo2" [ref=e246]: 95% (room air)
+                - generic [ref=e247]:
+                  - generic [ref=e248]: rhythm
+                  - textbox "rhythm" [ref=e249]: Sinus tachycardia
+              - generic [ref=e250]:
+                - generic [ref=e251]:
+                  - text: Physical exam
+                  - textbox "Physical exam" [ref=e252]: "General: ill-appearing, febrile, anxious; answers slowly but follows commands (GCS 14). Airway: patent. Capability: Spontaneous breathing. Breathing: tachypneic; equal air entry; no focal findings. Circulation: warm extremities, bounding pulses. Capability: Palpation of pulses. Abdomen/GU: right costovertebral angle tenderness; suprapubic discomfort; no peritonitis. Skin: warm, diaphoretic. Capability: Sweat."
+                - generic [ref=e253]:
+                  - text: Investigations
+                  - textbox "Investigations" [ref=e254]: "Point-of-care glucose: 14 mmol/L (252 mg/dL). ECG: sinus tachycardia. Labs available if ordered: WBC 18.5, Cr 2.1 (baseline unknown), lactate 3.2, Na 130, K 4.6, HCO3 18. Urinalysis (if obtained): leukocyte esterase positive, nitrite positive, WBC >50/hpf, bacteria present. Blood cultures x2 and urine culture: pending (must be obtained before antibiotics if feasible)."
+                - generic [ref=e255]:
+                  - text: Expected actions
+                  - textbox "Expected actions" [ref=e256]: "Assign roles; initiate sepsis protocol; continuous monitoring and frequent BP cycling. Establish IV access (2 large-bore IVs). Capability: IV Access (Right Arm Only). Send blood cultures x2, CBC/CMP, venous/arterial lactate, UA/urine culture; check glucose. Start isotonic fluids (e.g., 1 L bolus; target ~30 mL/kg as tolerated) and reassess after each bolus. Administer broad-spectrum IV antibiotics appropriate for obstructive pyelonephritis after cultures (e.g., piperacillin-tazobactam or cefepime +/- vancomycin per local policy). Communication checkpoint: Provide a structured update to the bedside nurse and partner (working diagnosis = sepsis likely urinary source; immediate plan = fluids, cultures, antibiotics, imaging/consult)."
+                - generic [ref=e257]:
+                  - text: Remarks
+                  - textbox "Remarks" [ref=e258]: "If learners delay cultures/antibiotics: nurse confederate prompts, 'Do you want cultures before antibiotics? Which antibiotic now?' Safety-net alternative: If learners do not recognize sepsis, family confederate states, 'She is much more confused than usual,' prompting reassessment and sepsis screening. Instructor note: If fluids started promptly and antibiotics ordered early, you may slightly improve mental status but maintain risk of hypotension due to obstruction."
+                - generic [ref=e259]:
+                  - text: Instructor control
+                  - textbox "Instructor control" [ref=e260]: "Provide temperature verbally if asked: 39.2°C. If learners request imaging: respond that CT abdomen/pelvis is available; bedside ultrasound can be performed. Transition trigger (to State 2): After 10–15 minutes OR after 1–2 L fluids given, BP trends down with rising lactate/ongoing tachycardia despite initial measures."
+                - generic [ref=e261]:
+                  - text: Transition rule
+                  - combobox "Transition rule" [ref=e262]:
+                    - option "next" [selected]
+                    - option "auto"
+                    - option "handler"
+            - generic [ref=e463]:
+              - generic [ref=e464]:
+                - paragraph [ref=e465]: State 2
+                - button "Remove" [ref=e466]
+              - generic [ref=e467]: State name
+              - textbox [ref=e468]: "State 2: Hemodynamic Deterioration—Septic Shock Emerging (persistent hypotension after fluids)"
+              - generic [ref=e469]:
+                - generic [ref=e470]:
+                  - generic [ref=e471]: bp
+                  - textbox "bp" [ref=e472]: 88/52
+                - generic [ref=e473]:
+                  - generic [ref=e474]: pr
+                  - textbox "pr" [ref=e475]: "126"
+                - generic [ref=e476]:
+                  - generic [ref=e477]: rr
+                  - textbox "rr" [ref=e478]: "26"
+                - generic [ref=e479]:
+                  - generic [ref=e480]: spo2
+                  - textbox "spo2" [ref=e481]: 94% (2 L nasal cannula)
+                - generic [ref=e482]:
+                  - generic [ref=e483]: rhythm
+                  - textbox "rhythm" [ref=e484]: Sinus tachycardia
+              - generic [ref=e485]:
+                - generic [ref=e486]:
+                  - text: Physical exam
+                  - textbox "Physical exam" [ref=e487]: "Mental status: more lethargic; intermittently disoriented (GCS 13). Breathing: increased work of breathing but speaking in short sentences. Circulation: delayed capillary refill; pulses present. Capability: Palpation of pulses. GU: oliguria reported by nurse; bladder scan low volume (if requested)."
+                - generic [ref=e488]:
+                  - text: Investigations
+                  - textbox "Investigations" [ref=e489]: "Repeat lactate (if ordered): 4.6. Bedside ultrasound (if requested): moderate right hydronephrosis. CT A/P non-contrast (if requested): 7 mm obstructing right proximal ureteral stone with hydronephrosis; perinephric stranding consistent with pyelonephritis."
+                - generic [ref=e490]:
+                  - text: Expected actions
+                  - textbox "Expected actions" [ref=e491]: "Recognize septic shock (hypotension with elevated lactate) and escalate resuscitation. Continue fluids with reassessment; consider early vasopressor initiation for persistent hypotension (e.g., norepinephrine via peripheral IV while preparing central access per local policy). Insert Foley catheter for urine output monitoring; strict I&Os. Reassess for other shock etiologies; ensure antibiotics given/infusing; consider adding coverage if indicated by local antibiogram. Consult urology urgently for source control (ureteral stent vs nephrostomy) and consult ICU for shock. Communication checkpoint: Call urology using SBAR including CT/US findings, current BP/pressors, lactate trend, and urgency for decompression."
+                - generic [ref=e492]:
+                  - text: Remarks
+                  - textbox "Remarks" [ref=e493]: "If learners do not start vasopressors: nurse prompts, 'BP is still low despite fluids—do you want a pressor?' Safety-net alternative: If they hesitate due to lack of central line, allow peripheral norepinephrine per policy; instructor can cue 'You may start peripheral pressors while arranging definitive access.' If learners omit Foley: prompt with 'No urine output since arrival—do you want a catheter for monitoring?'"
+                - generic [ref=e494]:
+                  - text: Instructor control
+                  - textbox "Instructor control" [ref=e495]: "If norepinephrine started and titrated appropriately, BP improves to ~100/60 within 3–5 minutes; if not, BP continues to fall in next state. If learners request ICU: consultant agrees and asks for current pressor dose and response to fluids. Transition trigger (to State 3): If norepinephrine not initiated within ~5 minutes of persistent hypotension OR mental status worsens/SpO2 trends down with fatigue."
+                - generic [ref=e496]:
+                  - text: Transition rule
+                  - combobox "Transition rule" [ref=e497]:
+                    - option "next" [selected]
+                    - option "auto"
+                    - option "handler"
+            - generic [ref=e498]:
+              - generic [ref=e499]:
+                - paragraph [ref=e500]: State 3
+                - button "Remove" [ref=e501]
+              - generic [ref=e502]: State name
+              - textbox [ref=e503]: "State 3: Shock with Altered Mental Status—Requires Pressors, Airway Planning, and Source Control Coordination"
+              - generic [ref=e504]:
+                - generic [ref=e505]:
+                  - generic [ref=e506]: bp
+                  - textbox "bp" [ref=e507]: 76/44
+                - generic [ref=e508]:
+                  - generic [ref=e509]: pr
+                  - textbox "pr" [ref=e510]: "132"
+                - generic [ref=e511]:
+                  - generic [ref=e512]: rr
+                  - textbox "rr" [ref=e513]: "30"
+                - generic [ref=e514]:
+                  - generic [ref=e515]: spo2
+                  - textbox "spo2" [ref=e516]: 90% (non-rebreather mask)
+                - generic [ref=e517]:
+                  - generic [ref=e518]: rhythm
+                  - textbox "rhythm" [ref=e519]: Sinus tachycardia
+              - generic [ref=e520]:
+                - generic [ref=e521]:
+                  - text: Physical exam
+                  - textbox "Physical exam" [ref=e522]: "Mental status: markedly confused, minimally cooperative; GCS 11–12; responds to voice/pain. Breathing: tachypnea with fatigue; shallow respirations. Capability: Difficulty breathing. Circulation: cool extremities; weak peripheral pulses. Capability: Palpation of pulses. Skin: mottling begins at knees (verbalized)."
+                - generic [ref=e523]:
+                  - text: Investigations
+                  - textbox "Investigations" [ref=e524]: "ABG/VBG (if ordered): metabolic acidosis (pH 7.28), low bicarbonate; CO2 low from hyperventilation. Repeat glucose (if ordered): 13 mmol/L (234 mg/dL). Creatinine and potassium remain elevated; consider acute kidney injury."
+                - generic [ref=e525]:
+                  - text: Expected actions
+                  - textbox "Expected actions" [ref=e526]: "Escalate vasopressors promptly (titrate norepinephrine; add additional access as needed). Ensure ongoing antibiotic therapy; consider second-line/add-on per policy if severe shock or concern for resistant organism. Airway/ventilation planning: apply high-flow oxygen support as available; prepare for assisted ventilation if mental status/respiratory fatigue worsens. Capability: Bag-mask ventilation (if they choose to support ventilation). Frequent reassessment (BP q2–3 min, mental status, urine output). Finalize urgent source control plan with urology/IR; prepare for transfer to OR/IR/ICU once stabilized enough. Communication checkpoint: Team leader performs a 30-second huddle—shares priorities (pressors, oxygen/airway readiness, antibiotics complete, decompression plan) and assigns tasks with closed-loop confirmation."
+                - generic [ref=e527]:
+                  - text: Remarks
+                  - textbox "Remarks" [ref=e528]: "Safety-net alternative: If learners focus only on airway and ignore shock, instructor should allow brief BVM support but continue hypotension until pressors/fluids addressed. If learners do not call urology/IR: consultant confederate calls back asking, 'Is this obstructed infected system? She needs decompression—what’s your plan and timing?' If learners request sedation/intubation without hemodynamic prep: remind via nurse prompt, 'Her pressure is very low—should we optimize before induction?' (focus on resuscitation-first principle)."
+                - generic [ref=e529]:
+                  - text: Instructor control
+                  - textbox "Instructor control" [ref=e530]: "If norepinephrine is initiated/titrated and additional fluid bolus given, improve BP to ~96/58 and SpO2 to 94% with decreased RR. If no pressors by end of state: BP may drop to 60 systolic and patient becomes increasingly obtunded (do not progress to arrest unless learners persistently ignore shock). Transition trigger (to State 4): After effective pressor titration + antibiotics running + definitive source control arranged (urology/IR acceptance) OR after instructor time limit (~5 minutes in this state)."
+                - generic [ref=e531]:
+                  - text: Transition rule
+                  - combobox "Transition rule" [ref=e532]:
+                    - option "next" [selected]
+                    - option "auto"
+                    - option "handler"
+            - generic [ref=e533]:
+              - generic [ref=e534]:
+                - paragraph [ref=e535]: State 4
+                - button "Remove" [ref=e536]
+              - generic [ref=e537]: State name
+              - textbox [ref=e538]: "State 4: Stabilization for Transfer—Ongoing Septic Shock Management and Handoff"
+              - generic [ref=e539]:
+                - generic [ref=e540]:
+                  - generic [ref=e541]: bp
+                  - textbox "bp" [ref=e542]: 102/60 (on norepinephrine infusion)
+                - generic [ref=e543]:
+                  - generic [ref=e544]: pr
+                  - textbox "pr" [ref=e545]: "112"
+                - generic [ref=e546]:
+                  - generic [ref=e547]: rr
+                  - textbox "rr" [ref=e548]: "22"
+                - generic [ref=e549]:
+                  - generic [ref=e550]: spo2
+                  - textbox "spo2" [ref=e551]: 95% (4 L nasal cannula)
+                - generic [ref=e552]:
+                  - generic [ref=e553]: rhythm
+                  - textbox "rhythm" [ref=e554]: Sinus tachycardia
+              - generic [ref=e555]:
+                - generic [ref=e556]:
+                  - text: Physical exam
+                  - textbox "Physical exam" [ref=e557]: "Mental status: improved to drowsy but arousable; oriented to person; follows simple commands (GCS 14). Breathing: less labored; equal breath sounds. Circulation: pulses stronger; capillary refill improving; urine output remains low but present after resuscitation/Foley."
+                - generic [ref=e558]:
+                  - text: Investigations
+                  - textbox "Investigations" [ref=e559]: "Repeat lactate (if ordered): 3.8 trending down (not yet normalized). Cultures remain pending. Imaging confirmed obstruction; urology/IR plan documented (ureteral stent or nephrostomy within hours)."
+                - generic [ref=e560]:
+                  - text: Expected actions
+                  - textbox "Expected actions" [ref=e561]: "Maintain MAP goal with vasopressor titration; continue reassessment and document response (BP, mentation, lactate trend, urine output). Confirm antibiotics administered; plan redosing if prolonged course/transfer delay. Prepare for transfer to ICU and for source control procedure; ensure lines, infusion pumps, and monitoring in place. Perform structured handoff (SBAR) to ICU/transport team including diagnosis, interventions (fluids volume, antibiotics, pressor dose), lactate trend, imaging findings, and pending source control. Communication checkpoint: Update family/partner on severity (septic shock), current stabilization, and next steps (ICU + urgent decompression)."
+                - generic [ref=e562]:
+                  - text: Remarks
+                  - textbox "Remarks" [ref=e563]: "Safety-net alternative: If learners fail to arrange ICU transfer, nurse prompts, 'Do you want ICU bed request? She’s on pressors.' If learners forget to communicate source control urgency: urology confederate requests confirmation of timing and readiness for transport. End condition: Patient stable enough for transfer but remains critically ill; emphasize that improvement is conditional on ongoing pressors/antibiotics and definitive decompression."
+                - generic [ref=e564]:
+                  - text: Instructor control
+                  - textbox "Instructor control" [ref=e565]: "If learners provide adequate handoff content, consultant accepts and gives ETA for decompression. If learners stop pressor or reduce too quickly, BP falls gradually (e.g., to 88/52) prompting reassessment and reinforcement of ongoing shock physiology. Transition trigger: Scenario ends after complete ICU handoff and family update OR at 20-minute mark."
+                - generic [ref=e566]:
+                  - text: Transition rule
+                  - combobox "Transition rule" [ref=e567]:
+                    - option "next" [selected]
+                    - option "auto"
+                    - option "handler"
+        - generic [ref=e263]:
+          - generic [ref=e264]:
+            - heading "10. Equipment" [level=2] [ref=e265]
+            - generic [ref=e266]:
+              - button "Lock" [ref=e267]
+              - button "AI Fill Section" [ref=e268]
+          - button "+ Add equipment row" [ref=e270]
+          - table [ref=e272]:
+            - rowgroup [ref=e273]:
+              - row "Category Item Qty Remarks Action" [ref=e274]:
+                - columnheader "Category" [ref=e275]
+                - columnheader "Item" [ref=e276]
+                - columnheader "Qty" [ref=e277]
+                - columnheader "Remarks" [ref=e278]
+                - columnheader "Action" [ref=e279]
+            - rowgroup [ref=e280]:
+              - 'row "Airway and breathing Oxygen delivery devices (nasal cannula, non-rebreather mask) and bag-valve-mask with PEEP valve 1 set Capability: Bag-mask ventilation if learners choose assisted ventilation Remove" [ref=e652]':
+                - cell "Airway and breathing" [ref=e653]:
+                  - textbox [ref=e283]: Airway and breathing
+                - cell "Oxygen delivery devices (nasal cannula, non-rebreather mask) and bag-valve-mask with PEEP valve" [ref=e654]:
+                  - textbox [ref=e285]: Oxygen delivery devices (nasal cannula, non-rebreather mask) and bag-valve-mask with PEEP valve
+                - cell "1 set" [ref=e655]:
+                  - textbox [ref=e287]: 1 set
+                - 'cell "Capability: Bag-mask ventilation if learners choose assisted ventilation" [ref=e656]':
+                  - textbox [ref=e289]: "Capability: Bag-mask ventilation if learners choose assisted ventilation"
+                - cell "Remove" [ref=e290]:
+                  - button "Remove" [ref=e291]
+              - row "Monitoring Defibrillator/monitor with NIBP cuff and SpO2 probe 1 Use existing monitor setup; cycle BP frequently Remove" [ref=e657]:
+                - cell "Monitoring" [ref=e658]:
+                  - textbox [ref=e575]: Monitoring
+                - cell "Defibrillator/monitor with NIBP cuff and SpO2 probe" [ref=e659]:
+                  - textbox [ref=e577]: Defibrillator/monitor with NIBP cuff and SpO2 probe
+                - cell "1" [ref=e578]:
+                  - textbox [ref=e579]: "1"
+                - cell "Use existing monitor setup; cycle BP frequently" [ref=e660]:
+                  - textbox [ref=e581]: Use existing monitor setup; cycle BP frequently
+                - cell "Remove" [ref=e582]:
+                  - button "Remove" [ref=e583]
+              - 'row "Vascular access IV cannulas (18G/16G), extension sets, pressure bags; IO kit available 2+ IV; 1 IO kit Capability: IV Access (Right Arm Only); Capability: Intra-osseous access (sternum, tibial) as backup Remove" [ref=e661]':
+                - cell "Vascular access" [ref=e585]:
+                  - textbox [ref=e586]: Vascular access
+                - cell "IV cannulas (18G/16G), extension sets, pressure bags; IO kit available" [ref=e662]:
+                  - textbox [ref=e588]: IV cannulas (18G/16G), extension sets, pressure bags; IO kit available
+                - cell "2+ IV; 1 IO kit" [ref=e663]:
+                  - textbox [ref=e590]: 2+ IV; 1 IO kit
+                - 'cell "Capability: IV Access (Right Arm Only); Capability: Intra-osseous access (sternum, tibial) as backup" [ref=e664]':
+                  - textbox [ref=e592]: "Capability: IV Access (Right Arm Only); Capability: Intra-osseous access (sternum, tibial) as backup"
+                - cell "Remove" [ref=e593]:
+                  - button "Remove" [ref=e594]
+              - row "Fluids and infusion Crystalloid fluids and infusion pumps 2-3 L available; 2 pumps For boluses and vasopressor infusion Remove" [ref=e665]:
+                - cell "Fluids and infusion" [ref=e666]:
+                  - textbox [ref=e597]: Fluids and infusion
+                - cell "Crystalloid fluids and infusion pumps" [ref=e667]:
+                  - textbox [ref=e599]: Crystalloid fluids and infusion pumps
+                - cell "2-3 L available; 2 pumps" [ref=e668]:
+                  - textbox [ref=e601]: 2-3 L available; 2 pumps
+                - cell "For boluses and vasopressor infusion" [ref=e669]:
+                  - textbox [ref=e603]: For boluses and vasopressor infusion
+                - cell "Remove" [ref=e604]:
+                  - button "Remove" [ref=e605]
+              - row "Medications Broad-spectrum antibiotics; norepinephrine infusion; acetaminophen; antiemetic Per protocol Antibiotic choices per local formulary; emphasize timely administration Remove" [ref=e670]:
+                - cell "Medications" [ref=e607]:
+                  - textbox [ref=e608]: Medications
+                - cell "Broad-spectrum antibiotics; norepinephrine infusion; acetaminophen; antiemetic" [ref=e671]:
+                  - textbox [ref=e610]: Broad-spectrum antibiotics; norepinephrine infusion; acetaminophen; antiemetic
+                - cell "Per protocol" [ref=e672]:
+                  - textbox [ref=e612]: Per protocol
+                - cell "Antibiotic choices per local formulary; emphasize timely administration" [ref=e673]:
+                  - textbox [ref=e614]: Antibiotic choices per local formulary; emphasize timely administration
+                - cell "Remove" [ref=e615]:
+                  - button "Remove" [ref=e616]
+              - row "Diagnostics Blood culture bottles, lab tubes, urine specimen cup, Foley catheter kit, bedside ultrasound access 1 set UA/urine culture, strict urine output monitoring; ultrasound for hydronephrosis Remove" [ref=e674]:
+                - cell "Diagnostics" [ref=e618]:
+                  - textbox [ref=e619]: Diagnostics
+                - cell "Blood culture bottles, lab tubes, urine specimen cup, Foley catheter kit, bedside ultrasound access" [ref=e675]:
+                  - textbox [ref=e621]: Blood culture bottles, lab tubes, urine specimen cup, Foley catheter kit, bedside ultrasound access
+                - cell "1 set" [ref=e676]:
+                  - textbox [ref=e623]: 1 set
+                - cell "UA/urine culture, strict urine output monitoring; ultrasound for hydronephrosis" [ref=e677]:
+                  - textbox [ref=e625]: UA/urine culture, strict urine output monitoring; ultrasound for hydronephrosis
+                - cell "Remove" [ref=e626]:
+                  - button "Remove" [ref=e627]
+              - row "Documentation/communication Sepsis checklist/order set and SBAR handoff template 1 Use for communication checkpoints each state Remove" [ref=e678]:
+                - cell "Documentation/communication" [ref=e679]:
+                  - textbox [ref=e630]: Documentation/communication
+                - cell "Sepsis checklist/order set and SBAR handoff template" [ref=e680]:
+                  - textbox [ref=e632]: Sepsis checklist/order set and SBAR handoff template
+                - cell "1" [ref=e633]:
+                  - textbox [ref=e634]: "1"
+                - cell "Use for communication checkpoints each state" [ref=e681]:
+                  - textbox [ref=e636]: Use for communication checkpoints each state
+                - cell "Remove" [ref=e637]:
+                  - button "Remove" [ref=e638]
+        - generic [ref=e292]:
+          - generic [ref=e293]:
+            - heading "11. Debrief Information" [level=2] [ref=e294]
+            - generic [ref=e295]:
+              - button "Lock" [ref=e296]
+              - button "AI Fill Section" [ref=e297]
+          - generic [ref=e298]:
+            - generic [ref=e299]:
+              - text: Number Of Debriefers
+              - textbox "Number Of Debriefers" [ref=e300]: 1-2
+            - generic [ref=e301]:
+              - text: Debrief Room Setup
+              - textbox "Debrief Room Setup" [ref=e302]: Quiet room with whiteboard; seating for all participants; timeline and vitals trend visible
+            - generic [ref=e303]:
+              - text: Debrief Description
+              - textbox "Debrief Description" [ref=e304]: Facilitated debrief focusing on clinical reasoning (sepsis to shock), prioritization, reassessment, and communication. Review what triggered recognition of shock, how decisions were made about pressors, and how source control was coordinated.
+            - generic [ref=e305]:
+              - text: Logistics Required
+              - textbox "Logistics Required" [ref=e306]: Printed sepsis bundle checklist; copy of provided labs/imaging; scoring sheet for teamwork and communication checkpoints
+        - generic [ref=e307]:
+          - generic [ref=e308]:
+            - heading "12. Simulator / SP / Task Trainer Preparation" [level=2] [ref=e309]
+            - generic [ref=e310]:
+              - button "Lock" [ref=e311]
+              - button "AI Fill Section" [ref=e312]
+          - generic [ref=e313]:
+            - textbox "One entry per line" [ref=e314]: "Configure baseline vitals for State 1 and ensure ability to trend BP down across states on instructor command. Enable Capability: Spontaneous breathing; Capability: Palpation of pulses; Capability: IV Access (Right Arm Only); prepare to verbalize oliguria and diaphoresis. Prepare lab results in sequence (CBC/CMP, lactate initial and repeat, UA) and imaging read (CT/US showing obstructing ureteral stone with hydronephrosis). Prepare medication response logic: fluids modestly improve HR; norepinephrine improves MAP; without pressors, progressive hypotension and worsening mentation. Set confederate prompts for missed critical actions (antibiotics delay, no pressors, no urology consult, no ICU handoff). Prepare end-state stabilization on pressor support and ensure handoff endpoint is achievable within time."
+            - button "Add row" [ref=e316]
+        - generic [ref=e317]:
+          - generic [ref=e318]:
+            - heading "13. Patient Monitor Setup" [level=2] [ref=e319]
+            - generic [ref=e320]:
+              - button "Lock" [ref=e321]
+              - button "AI Fill Section" [ref=e322]
+          - generic [ref=e323]:
+            - paragraph [ref=e324]: Monitor Layout
+            - generic [ref=e325]:
+              - generic [ref=e326]:
+                - checkbox "5 waveform" [checked] [ref=e327]
+                - text: 5 waveform
+              - generic [ref=e328]:
+                - checkbox "4 waveform" [ref=e329]
+                - text: 4 waveform
+              - generic [ref=e330]:
+                - checkbox "3 waveform" [ref=e331]
+                - text: 3 waveform
+              - generic [ref=e332]:
+                - checkbox "Big Num layout" [ref=e333]
+                - text: Big Num layout
+          - generic [ref=e334]:
+            - paragraph [ref=e335]: Monitor Parameters
+            - generic [ref=e337]:
+              - generic [ref=e338]:
+                - checkbox "Primary Electrocardiogram" [checked] [ref=e339]
+                - text: Primary Electrocardiogram
+              - generic [ref=e340]:
+                - checkbox "Secondary Electrocardiogram" [ref=e341]
+                - text: Secondary Electrocardiogram
+              - generic [ref=e342]:
+                - checkbox "ABP - Arterial Blood Pressure" [ref=e343]
+                - text: ABP - Arterial Blood Pressure
+              - generic [ref=e344]:
+                - checkbox "SPO2 (Plethysmogram)" [checked] [ref=e345]
+                - text: SPO2 (Plethysmogram)
+              - generic [ref=e346]:
+                - checkbox "PAP - Pulmonary Artery Pressure" [ref=e347]
+                - text: PAP - Pulmonary Artery Pressure
+              - generic [ref=e348]:
+                - checkbox "CO2 – End-tidal Carbon Dioxide" [ref=e349]
+                - text: CO2 – End-tidal Carbon Dioxide
+              - generic [ref=e350]:
+                - checkbox "pH – Aterial pH" [ref=e351]
+                - text: pH – Aterial pH
+              - generic [ref=e352]:
+                - checkbox "CVP - Central Venous Pressure" [ref=e353]
+                - text: CVP - Central Venous Pressure
+              - generic [ref=e354]:
+                - checkbox "NBP- Non-invasive Blood Pressure" [checked] [ref=e355]
+                - text: NBP- Non-invasive Blood Pressure
+              - generic [ref=e356]:
+                - checkbox "TOF - Train Of Four" [ref=e357]
+                - text: TOF - Train Of Four
+              - generic [ref=e358]:
+                - checkbox "N2O - Nitrous Oxide" [ref=e359]
+                - text: N2O - Nitrous Oxide
+              - generic [ref=e360]:
+                - checkbox "O2 - Oxygen pressure" [ref=e361]
+                - text: O2 - Oxygen pressure
+              - generic [ref=e362]:
+                - checkbox "Pulse" [checked] [ref=e363]
+                - text: Pulse
+              - generic [ref=e364]:
+                - checkbox "WP – Wedge Pattern" [ref=e365]
+                - text: WP – Wedge Pattern
+              - generic [ref=e366]:
+                - checkbox "RR - Airway Respiration Rate" [ref=e367]
+                - text: RR - Airway Respiration Rate
+              - generic [ref=e368]:
+                - checkbox "C.O. - Cardiac Output" [ref=e369]
+                - text: C.O. - Cardiac Output
+              - generic [ref=e370]:
+                - checkbox "TPeri - Peripheral Temperature" [ref=e371]
+                - text: TPeri - Peripheral Temperature
+              - generic [ref=e372]:
+                - checkbox "Tblood - Invasive blood temperature" [ref=e373]
+                - text: Tblood - Invasive blood temperature
+              - generic [ref=e374]:
+                - checkbox "ICP - Intracranial pressure" [ref=e375]
+                - text: ICP - Intracranial pressure
+              - generic [ref=e376]:
+                - checkbox "AGT – Agent" [ref=e377]
+                - text: AGT – Agent
+              - generic [ref=e378]:
+                - checkbox "HR- Heart Rate" [checked] [ref=e379]
+                - text: HR- Heart Rate
+        - generic [ref=e380]:
+          - generic [ref=e381]:
+            - heading "14. Document Information" [level=2] [ref=e382]
+            - generic [ref=e383]:
+              - button "Lock" [ref=e384]
+              - button "AI Fill Section" [ref=e385]
+          - generic [ref=e386]:
+            - generic [ref=e387]:
+              - text: Author
+              - textbox "Author" [ref=e388]: SIMTAC Scenario Builder AI
+            - generic [ref=e389]:
+              - text: Designation
+              - textbox "Designation" [ref=e390]: Simulation Scenario Generator
+            - generic [ref=e391]:
+              - text: Department
+              - textbox "Department" [ref=e392]: Emergency Medicine
+            - generic [ref=e393]:
+              - text: Date Scenario Developed
+              - textbox "Date Scenario Developed" [ref=e394]: 2026-03-02
+            - generic [ref=e395]:
+              - text: Date Scenario Updated
+              - textbox "Date Scenario Updated" [ref=e396]: 2026-03-02
+      - complementary [ref=e397]:
+        - generic [ref=e398]:
+          - heading "AI Controls" [level=3] [ref=e399]
+          - generic [ref=e400]:
+            - generic [ref=e401]:
+              - text: "Thinking depth: 1"
+              - 'slider "Thinking depth: 1 0 = instant, 1 = low reasoning, 2 = medium reasoning" [ref=e402]': "1"
+              - generic [ref=e403]: 0 = instant, 1 = low reasoning, 2 = medium reasoning
+            - generic [ref=e404]:
+              - button "Update Unlocked with AI" [ref=e682]
+              - button "Validate" [ref=e406]
+              - button "Export DOCX" [ref=e407]
+        - generic [ref=e408]:
+          - heading "Section Locks (0/14)" [level=3] [ref=e409]
+          - generic [ref=e410]:
+            - button "[Open] 1. Course & Trainee" [ref=e411]
+            - button "[Open] 2. Learning Objectives" [ref=e412]
+            - button "[Open] 3. Clinical Setting" [ref=e413]
+            - button "[Open] 4. Instructors" [ref=e414]
+            - button "[Open] 5. Confederates" [ref=e415]
+            - button "[Open] 6. Trainee Roles" [ref=e416]
+            - button "[Open] 7. Patient Information" [ref=e417]
+            - button "[Open] 8. Scenario Information" [ref=e418]
+            - button "[Open] 9. Scenario Flow" [ref=e419]
+            - button "[Open] 10. Equipment" [ref=e420]
+            - button "[Open] 11. Debrief Info" [ref=e421]
+            - button "[Open] 12. Simulator Prep" [ref=e422]
+            - button "[Open] 13. Monitor Setup" [ref=e423]
+            - button "[Open] 14. Document Info" [ref=e424]
+          - button "Unlock all sections" [ref=e425]
+        - generic [ref=e426]:
+          - heading "Field Locks (0)" [level=3] [ref=e427]
+          - paragraph [ref=e428]: Click any field in the form to select it here.
+          - generic [ref=e429]: "Selected field: None"
+          - generic [ref=e430]:
+            - button "Lock selected" [disabled] [ref=e431]
+            - button "Unlock selected" [disabled] [ref=e432]
+          - paragraph [ref=e434]: No locked fields.
+          - button "Clear all field locks" [ref=e435]
+        - generic [ref=e436]:
+          - heading "Validation Warnings" [level=3] [ref=e437]
+          - paragraph [ref=e439]: No validation warnings.
+        - generic [ref=e440]:
+          - heading "Source Grounding" [level=3] [ref=e441]
+          - paragraph [ref=e443]: No citations captured yet.
+        - generic [ref=e444]:
+          - heading "Knowledge Library Admin" [level=3] [ref=e445]
+          - generic [ref=e446]:
+            - textbox "Admin passcode" [ref=e447]
+            - generic [ref=e448]:
+              - button "List files" [ref=e449]
+              - generic [ref=e450]: Choose file
+            - button "Upload selected file" [ref=e451]

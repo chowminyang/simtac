@@ -1,0 +1,58 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - 'heading "SIMTAC AI Scenario Builder: Getting Started" [level=1] [ref=e5]'
+        - paragraph [ref=e6]: Use this guide to quickly create, refine, validate, and export high-quality simulation scenarios.
+      - generic [ref=e7]:
+        - heading "1. Access and Setup" [level=2] [ref=e8]
+        - list [ref=e9]:
+          - listitem [ref=e10]: Open the app and enter the site password to unlock.
+          - listitem [ref=e11]: "Choose your mode: `Create with AI` or `Fill Worksheet`."
+          - listitem [ref=e12]:
+            - text: "Use `Thinking depth` in the right panel:"
+            - list [ref=e13]:
+              - listitem [ref=e14]: "`0`: fastest, minimal reasoning"
+              - listitem [ref=e15]: "`1`: balanced (recommended)"
+              - listitem [ref=e16]: "`2`: deeper reasoning for complex scenarios"
+      - generic [ref=e17]:
+        - 'heading "2. Mode A: Create with AI" [level=2] [ref=e18]'
+        - list [ref=e19]:
+          - listitem [ref=e20]: "In `Scenario Prompt`, describe diagnosis, progression, expected learner actions, and debrief focus."
+          - listitem [ref=e21]: "Click `Generate Scenario` (below the prompt box)."
+          - listitem [ref=e22]: Review all sections and edit any fields directly.
+          - listitem [ref=e23]: "Use `Update Unlocked with AI` to regenerate only unlocked content."
+      - generic [ref=e24]:
+        - 'heading "3. Mode B: Fill Worksheet" [level=2] [ref=e25]'
+        - list [ref=e26]:
+          - listitem [ref=e27]: Enter key fields manually first (for example title, patient profile, scenario focus).
+          - listitem [ref=e28]: "Click `Fill Missing (Whole Form)` to complete blank sections."
+          - listitem [ref=e29]: "Use `AI Fill Section` inside any section for targeted completion."
+      - generic [ref=e30]:
+        - heading "4. Locks and Safe Regeneration" [level=2] [ref=e31]
+        - list [ref=e32]:
+          - listitem [ref=e33]: "Section lock: lock/unlock entire sections in the right sidebar."
+          - listitem [ref=e34]: "Field lock: click any specific field in the form, then use `Lock selected`."
+          - listitem [ref=e35]: Locked fields change color/shading and are preserved during AI updates.
+          - listitem [ref=e36]: "`Update Unlocked with AI` opens a popup where you can add specific update instructions before running."
+      - generic [ref=e37]:
+        - heading "5. Validation, Images, and Export" [level=2] [ref=e38]
+        - list [ref=e39]:
+          - listitem [ref=e40]: "Use `Validate` to run SimMan compatibility checks and warnings."
+          - listitem [ref=e41]: "In `Simulation Images`, generate or refine medical images and save selected ones to the scenario appendix."
+          - listitem [ref=e42]: "Click `Export DOCX` to download a Word file with dynamic tables and appendix images."
+      - generic [ref=e43]:
+        - heading "6. Knowledge Library (Admin)" [level=2] [ref=e44]
+        - list [ref=e45]:
+          - listitem [ref=e46]: "Enter admin passcode in `Knowledge Library Admin` to list, upload, or delete files."
+          - listitem [ref=e47]: "Runtime upload supports `.docx`, `.pdf`, `.txt`."
+          - listitem [ref=e48]: Reference retrieval is shared via one OpenAI vector store (no local database).
+      - generic [ref=e49]:
+        - heading "7. Reset and Session Behavior" [level=2] [ref=e50]
+        - list [ref=e51]:
+          - listitem [ref=e52]: "`Reset All` clears the full workspace after confirmation."
+          - listitem [ref=e53]: Draft state auto-saves in your browser local storage during the session.
+          - listitem [ref=e54]: There is no backend user database in this app.
+  - button "Open Next.js Dev Tools" [ref=e60] [cursor=pointer]:
+    - img [ref=e61]
+  - alert [ref=e64]

@@ -1,0 +1,16 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - heading "SIMTAC AI Scenario Builder" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Generate and refine medical simulation scenarios with strict SimMan capability checks and direct DOCX export.
+      - paragraph [ref=e7]: Ready.
+    - generic [ref=e8]:
+      - button "Create with AI Describe a scenario in free text and let AI build a complete SIMTAC worksheet." [ref=e9]:
+        - heading "Create with AI" [level=2] [ref=e10]
+        - paragraph [ref=e11]: Describe a scenario in free text and let AI build a complete SIMTAC worksheet.
+      - button "Fill Worksheet Fill key worksheet fields manually and use AI to complete missing sections." [ref=e12]:
+        - heading "Fill Worksheet" [level=2] [ref=e13]
+        - paragraph [ref=e14]: Fill key worksheet fields manually and use AI to complete missing sections.
+  - button "Open Next.js Dev Tools" [ref=e20] [cursor=pointer]:
+    - img [ref=e21]
+  - alert [ref=e24]

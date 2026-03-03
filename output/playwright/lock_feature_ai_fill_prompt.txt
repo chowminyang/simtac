@@ -1,0 +1,4 @@
+### Ran Playwright code
+```js
+await page.getByRole('textbox', { name: 'Describe your scenario goals' }).fill('Create an emergency airway scenario involving severe asthma exacerbation progressing to fatigue and need for intubation, with structured team communication.');
+```

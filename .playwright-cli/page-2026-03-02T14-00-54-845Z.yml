@@ -1,0 +1,767 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - heading "SIMTAC AI Scenario Builder" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Generate and refine medical simulation scenarios with strict SimMan capability checks and direct DOCX export.
+      - paragraph [ref=e7]: Unlocked sections updated.
+    - generic [ref=e25]:
+      - complementary [ref=e26]:
+        - button "Back to mode selection" [ref=e27]
+        - list [ref=e28]:
+          - listitem [ref=e29]:
+            - button "1. Course & Trainee" [ref=e30]
+          - listitem [ref=e31]:
+            - button "2. Learning Objectives" [ref=e32]
+          - listitem [ref=e33]:
+            - button "3. Clinical Setting" [ref=e34]
+          - listitem [ref=e35]:
+            - button "4. Instructors" [ref=e36]
+          - listitem [ref=e37]:
+            - button "5. Confederates" [ref=e38]
+          - listitem [ref=e39]:
+            - button "6. Trainee Roles" [ref=e40]
+          - listitem [ref=e41]:
+            - button "7. Patient Information" [ref=e42]
+          - listitem [ref=e43]:
+            - button "8. Scenario Information" [ref=e44]
+          - listitem [ref=e45]:
+            - button "9. Scenario Flow" [ref=e46]
+          - listitem [ref=e47]:
+            - button "10. Equipment" [ref=e48]
+          - listitem [ref=e49]:
+            - button "11. Debrief Info" [ref=e50]
+          - listitem [ref=e51]:
+            - button "12. Simulator Prep" [ref=e52]
+          - listitem [ref=e53]:
+            - button "13. Monitor Setup" [ref=e54]
+          - listitem [ref=e55]:
+            - button "14. Document Info" [ref=e56]
+      - main [ref=e57]:
+        - generic [ref=e58]:
+          - heading "Scenario Prompt" [level=2] [ref=e59]
+          - textbox "Describe your scenario goals, progression, expected learner actions, and clinical context..." [ref=e60]: Create an emergency airway scenario involving severe asthma exacerbation progressing to fatigue and need for intubation, with structured team communication.
+          - button "Generate Scenario" [ref=e422]
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - heading "1. Course & Trainee Information" [level=2] [ref=e65]
+            - generic [ref=e66]:
+              - button "Locked" [ref=e416]
+              - button "Section locked" [disabled] [ref=e417]
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - text: Course Title
+              - textbox "Course Title" [ref=e71]: LOCKED Course Title Should Stay
+            - generic [ref=e72]:
+              - text: Department
+              - textbox "Department" [ref=e73]: Emergency Medicine / Simulation Program
+            - generic [ref=e74]:
+              - text: Scenario Title
+              - textbox "Scenario Title" [ref=e75]: AI lock test scenario
+            - generic [ref=e76]:
+              - text: Target Learner Group
+              - textbox "Target Learner Group" [ref=e77]: ED residents, critical care fellows, and ED/ICU nurses (interprofessional team)
+            - generic [ref=e78]:
+              - text: Number Of Trainees
+              - textbox "Number Of Trainees" [ref=e79]: 4-6
+            - generic [ref=e80]:
+              - text: Number Of Instructors
+              - textbox "Number Of Instructors" [ref=e81]: 1-2
+            - generic [ref=e82]:
+              - text: Level Of Experience
+              - textbox "Level Of Experience" [ref=e83]: Intermediate (PGY1-3 with basic airway skills)
+            - generic [ref=e84]:
+              - text: Prerequisite Knowledge
+              - textbox "Prerequisite Knowledge" [ref=e85]: Adult asthma management (beta-agonists, anticholinergics, steroids, magnesium), recognition of impending respiratory failure, RSI basics, ventilator basics for severe asthma, closed-loop communication
+        - generic [ref=e86]:
+          - generic [ref=e87]:
+            - heading "2. Specific Learning Objectives" [level=2] [ref=e88]
+            - generic [ref=e89]:
+              - button "Lock" [ref=e90]
+              - button "AI Fill Section" [ref=e91]
+          - generic [ref=e92]:
+            - textbox "One entry per line" [ref=e93]: Perform rapid assessment of a patient with severe asthma and initiate evidence-based bronchodilator/steroid therapy. Recognize signs of impending respiratory failure (fatigue, altered mental status, rising CO2) and escalate to advanced airway management. Execute a structured RSI plan with role assignment, checklist use, and closed-loop communication. Initiate post-intubation ventilation appropriate for severe asthma (avoid breath stacking, permissive hypercapnia, continuous sedation) and reassess response.
+            - button "Add row" [ref=e95]
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - heading "3. Clinical / Environment Setting" [level=2] [ref=e98]
+            - generic [ref=e99]:
+              - button "Lock" [ref=e100]
+              - button "AI Fill Section" [ref=e101]
+          - generic [ref=e102]: Setting required
+          - textbox [ref=e103]: Emergency Department resuscitation bay
+          - generic [ref=e104]: Remarks
+          - textbox [ref=e105]: Full ED airway cart, suction, oxygen/air source, nebulizer capability, and ability to simulate intubation/ventilation. Use team roles and time-outs.
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - heading "4. Instructor Information" [level=2] [ref=e108]
+            - generic [ref=e109]:
+              - button "Lock" [ref=e110]
+              - button "AI Fill Section" [ref=e111]
+          - generic [ref=e112]:
+            - textbox "One entry per line" [ref=e113]: Lead simulation faculty (EM/ICU) and/or simulation technologist
+            - button "Add row" [ref=e115]
+        - generic [ref=e116]:
+          - generic [ref=e117]:
+            - heading "5. Confederate Information" [level=2] [ref=e118]
+            - generic [ref=e119]:
+              - button "Lock" [ref=e120]
+              - button "AI Fill Section" [ref=e121]
+          - generic [ref=e122]:
+            - textbox "One entry per line" [ref=e123]: Respiratory therapist (confederate) available on request; ED charge nurse (optional confederate) for prompts/logistics
+            - button "Add row" [ref=e125]
+        - generic [ref=e126]:
+          - generic [ref=e127]:
+            - heading "6. Trainees Role" [level=2] [ref=e128]
+            - generic [ref=e129]:
+              - button "Lock" [ref=e130]
+              - button "AI Fill Section" [ref=e131]
+          - generic [ref=e132]:
+            - textbox "One entry per line" [ref=e133]: Team leader (physician), airway operator, medication nurse, recorder/runner, respiratory therapist role (trainee or confederate)
+            - button "Add row" [ref=e135]
+        - generic [ref=e136]:
+          - generic [ref=e137]:
+            - heading "7. Patient Information" [level=2] [ref=e138]
+            - generic [ref=e139]:
+              - button "Lock" [ref=e140]
+              - button "AI Fill Section" [ref=e141]
+          - generic [ref=e142]:
+            - generic [ref=e143]:
+              - text: Name
+              - textbox "Name" [ref=e144]: Jordan Lee
+            - generic [ref=e145]:
+              - checkbox "Show On Monitor Before Start" [ref=e146]
+              - text: Show On Monitor Before Start
+            - generic [ref=e147]:
+              - checkbox "Make Available During Simulation" [ref=e148]
+              - text: Make Available During Simulation
+            - generic [ref=e149]:
+              - text: Identification No
+              - textbox "Identification No" [ref=e150]: ED-004217
+            - generic [ref=e151]:
+              - text: Race
+              - textbox "Race" [ref=e152]: Asian
+            - generic [ref=e153]:
+              - text: Age
+              - textbox "Age" [ref=e154]: 28 years
+            - generic [ref=e155]:
+              - text: Gender
+              - textbox "Gender" [ref=e156]: Male
+            - generic [ref=e157]:
+              - text: Weight
+              - textbox "Weight" [ref=e158]: 78 kg
+            - generic [ref=e159]:
+              - text: Height
+              - textbox "Height" [ref=e160]: 178 cm
+            - generic [ref=e161]:
+              - text: Past Medical And Social History
+              - textbox "Past Medical And Social History" [ref=e162]: Moderate-to-severe persistent asthma with prior ICU admission (no prior intubation). Seasonal allergies. Smokes cannabis occasionally; no tobacco. No cardiac history.
+            - generic [ref=e163]:
+              - text: Current Medications
+              - textbox "Current Medications" [ref=e164]: Albuterol MDI PRN (using frequently today), inhaled corticosteroid/long-acting beta-agonist (inconsistent adherence), cetirizine PRN
+            - generic [ref=e165]:
+              - text: Food Drug Allergies
+              - textbox "Food Drug Allergies" [ref=e166]: No known drug allergies
+            - generic [ref=e167]:
+              - text: Primary Care Provider
+              - textbox "Primary Care Provider" [ref=e168]: Community family physician
+            - generic [ref=e169]:
+              - text: Presenting Complaint History
+              - textbox "Presenting Complaint History" [ref=e170]: Progressive shortness of breath and chest tightness for 12 hours after URI symptoms. Used albuterol MDI every 30-60 minutes with diminishing relief. Arrives speaking in 1-2 word sentences, anxious, and diaphoretic.
+        - generic [ref=e171]:
+          - generic [ref=e172]:
+            - heading "8. Scenario Information" [level=2] [ref=e173]
+            - generic [ref=e174]:
+              - button "Lock" [ref=e175]
+              - button "AI Fill Section" [ref=e176]
+          - generic [ref=e177]:
+            - generic [ref=e178]:
+              - text: Time Allocated For Scenario
+              - textbox "Time Allocated For Scenario" [ref=e179]: 20 minutes
+            - generic [ref=e180]:
+              - text: Time Allocated For Debrief
+              - textbox "Time Allocated For Debrief" [ref=e181]: 25 minutes
+            - generic [ref=e182]:
+              - text: Scenario Summary
+              - textbox "Scenario Summary" [ref=e183]: Severe asthma exacerbation requiring escalation from initial bronchodilator/steroid therapy to recognition of fatigue and hypercapnic respiratory failure, culminating in RSI and ventilator strategy tailored to obstructive physiology. Emphasis on team communication, role clarity, and closed-loop orders.
+            - generic [ref=e184]:
+              - text: Scenario Information To Trainees
+              - textbox "Scenario Information To Trainees" [ref=e185]: You are working in an ED resuscitation bay. A 28-year-old with known asthma arrives in severe respiratory distress. Manage per usual practice, call for help early, and communicate clearly with your team.
+            - generic [ref=e186]:
+              - text: Transition Mode
+              - textbox "Transition Mode" [ref=e187]: next
+        - generic [ref=e188]:
+          - generic [ref=e189]:
+            - heading "9. Scenario Flow" [level=2] [ref=e190]
+            - generic [ref=e191]:
+              - button "Lock" [ref=e192]
+              - button "AI Fill Section" [ref=e193]
+          - generic [ref=e194]:
+            - paragraph [ref=e195]: State-by-state simulator control and expected action flow.
+            - button "+ Add state" [ref=e196]
+          - generic [ref=e197]:
+            - generic [ref=e198]:
+              - generic [ref=e199]:
+                - paragraph [ref=e200]: State 1
+                - button "Remove" [ref=e201]
+              - generic [ref=e202]: State name
+              - textbox [ref=e203]: "State 1: Arrival—Severe asthma, still compensating"
+              - generic [ref=e204]:
+                - generic [ref=e205]:
+                  - generic [ref=e206]: bp
+                  - textbox "bp" [ref=e207]: 152/92
+                - generic [ref=e208]:
+                  - generic [ref=e209]: pr
+                  - textbox "pr" [ref=e210]: "132"
+                - generic [ref=e211]:
+                  - generic [ref=e212]: rr
+                  - textbox "rr" [ref=e213]: "34"
+                - generic [ref=e214]:
+                  - generic [ref=e215]: spo2
+                  - textbox "spo2" [ref=e216]: 91% on room air
+                - generic [ref=e217]:
+                  - generic [ref=e218]: rhythm
+                  - textbox "rhythm" [ref=e219]: Sinus tachycardia
+              - generic [ref=e220]:
+                - generic [ref=e221]:
+                  - text: Physical exam
+                  - textbox "Physical exam" [ref=e222]: "Appearance: anxious, tripod position, speaking in short phrases, diaphoresis Work of breathing: severe accessory muscle use; Capability: Spontaneous breathing; Capability: Bilateral chest rise and fall Auscultation: diffuse tight wheeze, prolonged expiratory phase (Lung Sound: Wheezes) Perfusion: warm, pulses rapid; Capability: Palpation of pulses"
+                - generic [ref=e223]:
+                  - text: Investigations
+                  - textbox "Investigations" [ref=e224]: "Place patient on monitor; obtain 12-lead ECG if concerned (expect sinus tachycardia) Point-of-care glucose (normal) Venous blood gas (optional in this state): pH 7.33, pCO2 48 (early hypercapnia possible)"
+                - generic [ref=e225]:
+                  - text: Expected actions
+                  - textbox "Expected actions" [ref=e226]: Assign roles and establish team leader; use closed-loop communication Immediate oxygen (target SpO2 94-98%) Start continuous/nebulized bronchodilators (albuterol + ipratropium) Administer systemic corticosteroids (e.g., IV methylprednisolone or PO prednisone if able) Establish IV access; prepare magnesium sulfate as next step Reassess frequently; call RT early; prepare for potential deterioration
+                - generic [ref=e227]:
+                  - text: Remarks
+                  - textbox "Remarks" [ref=e228]: "If asked, patient reports: 'My inhaler isn't working anymore.' No fever. No chest pain. No known anaphylaxis exposure. Instructor may prompt for structured communication (SBAR, role assignment, read-backs)."
+                - generic [ref=e229]:
+                  - text: Instructor control
+                  - textbox "Instructor control" [ref=e230]: Ensure monitor shows tachycardia and hypoxemia; patient anxious voice and tachypnea If oxygen and nebulizers started promptly, SpO2 improves to 94% but work of breathing remains high Do not improve wheeze significantly yet; keep severe obstruction
+                - generic [ref=e231]:
+                  - text: Transition rule
+                  - combobox "Transition rule" [ref=e232]:
+                    - option "next" [selected]
+                    - option "auto"
+                    - option "handler"
+            - generic [ref=e423]:
+              - generic [ref=e424]:
+                - paragraph [ref=e425]: State 2
+                - button "Remove" [ref=e426]
+              - generic [ref=e427]: State name
+              - textbox [ref=e428]: "State 2: Partial response—persistent severe bronchospasm"
+              - generic [ref=e429]:
+                - generic [ref=e430]:
+                  - generic [ref=e431]: bp
+                  - textbox "bp" [ref=e432]: 148/88
+                - generic [ref=e433]:
+                  - generic [ref=e434]: pr
+                  - textbox "pr" [ref=e435]: "128"
+                - generic [ref=e436]:
+                  - generic [ref=e437]: rr
+                  - textbox "rr" [ref=e438]: "32"
+                - generic [ref=e439]:
+                  - generic [ref=e440]: spo2
+                  - textbox "spo2" [ref=e441]: 94% on non-rebreather or high-flow oxygen
+                - generic [ref=e442]:
+                  - generic [ref=e443]: rhythm
+                  - textbox "rhythm" [ref=e444]: Sinus tachycardia
+              - generic [ref=e445]:
+                - generic [ref=e446]:
+                  - text: Physical exam
+                  - textbox "Physical exam" [ref=e447]: "Still speaking only short phrases; fatigued but alert Auscultation: loud diffuse wheezes (Lung Sound: Wheezes) Prolonged expiratory phase; continued accessory muscle use No urticaria/angioedema; no focal crackles"
+                - generic [ref=e448]:
+                  - text: Investigations
+                  - textbox "Investigations" [ref=e449]: "CXR (portable): hyperinflation; no infiltrate; no pneumothorax VBG/ABG if obtained now: pH 7.29, pCO2 58, HCO3 26, lactate 2.0 Peak flow (if attempted) very low/unobtainable due to distress"
+                - generic [ref=e450]:
+                  - text: Expected actions
+                  - textbox "Expected actions" [ref=e451]: "Continue continuous bronchodilator therapy; confirm correct delivery and dosing Administer magnesium sulfate IV (e.g., 2 g over 20 minutes) if not already given Consider IM/IV epinephrine if unable to move air or concern for impending arrest (contextualized to local practice) Explicitly discuss and prepare for airway: call for airway cart, assign airway/medication roles, prepare RSI checklist, prepare BVM with PEEP valve (low PEEP), suction ready (Capability: Suctioning; Capability: Bag-mask ventilation) Reassess mental status and ventilation; anticipate need for intubation"
+                - generic [ref=e452]:
+                  - text: Remarks
+                  - textbox "Remarks" [ref=e453]: "Patient increasingly tired: 'I'm... so... tired.' If learners ask about prior intubation: none, but ICU admission last year. If learners communicate and plan early, set them up for controlled RSI."
+                - generic [ref=e454]:
+                  - text: Instructor control
+                  - textbox "Instructor control" [ref=e455]: "If magnesium given and continuous nebs maintained, only minimal improvement in RR; CO2 continues to rise If learners fail to reassess ventilation or ignore rising CO2, progress to fatigue more rapidly Cue RT confederate to ask: 'Do you want me to set up for BiPAP or prepare for intubation?'"
+                - generic [ref=e456]:
+                  - text: Transition rule
+                  - combobox "Transition rule" [ref=e457]:
+                    - option "next" [selected]
+                    - option "auto"
+                    - option "handler"
+            - generic [ref=e458]:
+              - generic [ref=e459]:
+                - paragraph [ref=e460]: State 3
+                - button "Remove" [ref=e461]
+              - generic [ref=e462]: State name
+              - textbox [ref=e463]: "State 3: Impending respiratory failure—fatigue and reduced air movement"
+              - generic [ref=e464]:
+                - generic [ref=e465]:
+                  - generic [ref=e466]: bp
+                  - textbox "bp" [ref=e467]: 140/82
+                - generic [ref=e468]:
+                  - generic [ref=e469]: pr
+                  - textbox "pr" [ref=e470]: "122"
+                - generic [ref=e471]:
+                  - generic [ref=e472]: rr
+                  - textbox "rr" [ref=e473]: 24 (slowing due to fatigue)
+                - generic [ref=e474]:
+                  - generic [ref=e475]: spo2
+                  - textbox "spo2" [ref=e476]: 92% on high-flow oxygen
+                - generic [ref=e477]:
+                  - generic [ref=e478]: rhythm
+                  - textbox "rhythm" [ref=e479]: Sinus tachycardia
+              - generic [ref=e480]:
+                - generic [ref=e481]:
+                  - text: Physical exam
+                  - textbox "Physical exam" [ref=e482]: "Mental status: drowsy, answers slowly; cannot speak full sentences Work of breathing: marked fatigue; shallow respirations; Capability: Difficulty breathing Auscultation: markedly diminished wheeze/air entry ('silent chest' evolving) (Lung Sound: Absent breath sounds) Skin: diaphoretic"
+                - generic [ref=e483]:
+                  - text: Investigations
+                  - textbox "Investigations" [ref=e484]: "ABG/VBG now: pH 7.18, pCO2 78, pO2 70 (on high-flow oxygen), HCO3 28 End-tidal CO2 if applied (pre-intubation): rising trend (if available locally)"
+                - generic [ref=e485]:
+                  - text: Expected actions
+                  - textbox "Expected actions" [ref=e486]: "Declare respiratory failure and proceed to controlled RSI with team time-out Optimize pre-oxygenation; consider gentle BVM if needed while avoiding aggressive ventilation (Capability: Bag-mask ventilation) Prepare difficult airway backup and assign roles; have suction ready (Capability: Suctioning) Select RSI meds appropriate for severe asthma and hypotension risk; plan for post-intubation sedation/analgesia Plan ventilator strategy for asthma (low rate, long expiratory time, permissive hypercapnia) and discuss risk of breath stacking"
+                - generic [ref=e487]:
+                  - text: Remarks
+                  - textbox "Remarks" [ref=e488]: "Key teaching point: decreasing wheeze with worsening distress suggests minimal airflow, not improvement. If learners attempt to delay intubation despite worsening hypercapnia and mental status, patient will become obtunded and peri-arrest."
+                - generic [ref=e489]:
+                  - text: Instructor control
+                  - textbox "Instructor control" [ref=e490]: If team performs checklist/time-out and prepares equipment, allow stable window for RSI If learners provide overly aggressive bagging, worsen dynamic hyperinflation (SpO2 may drop and BP may fall in next state) If asked, no evidence of pneumothorax on prior CXR; trachea midline
+                - generic [ref=e491]:
+                  - text: Transition rule
+                  - combobox "Transition rule" [ref=e492]:
+                    - option "next" [selected]
+                    - option "auto"
+                    - option "handler"
+            - generic [ref=e493]:
+              - generic [ref=e494]:
+                - paragraph [ref=e495]: State 4
+                - button "Remove" [ref=e496]
+              - generic [ref=e497]: State name
+              - textbox [ref=e498]: "State 4: RSI and intubation—peri-intubation risk period"
+              - generic [ref=e499]:
+                - generic [ref=e500]:
+                  - generic [ref=e501]: bp
+                  - textbox "bp" [ref=e502]: 118/70 (may fall with induction)
+                - generic [ref=e503]:
+                  - generic [ref=e504]: pr
+                  - textbox "pr" [ref=e505]: "118"
+                - generic [ref=e506]:
+                  - generic [ref=e507]: rr
+                  - textbox "rr" [ref=e508]: 8 (pre-intubation hypoventilation) then ventilated
+                - generic [ref=e509]:
+                  - generic [ref=e510]: spo2
+                  - textbox "spo2" [ref=e511]: 88% drifting down during attempts
+                - generic [ref=e512]:
+                  - generic [ref=e513]: rhythm
+                  - textbox "rhythm" [ref=e514]: Sinus tachycardia
+              - generic [ref=e515]:
+                - generic [ref=e516]:
+                  - text: Physical exam
+                  - textbox "Physical exam" [ref=e517]: "Obtunded; minimal respiratory effort Airway: no vomit; secretions minimal Chest: very poor air movement (Lung Sound: Absent breath sounds) Capability: Intubation; Capability: Bag-mask ventilation; Capability: Suctioning"
+                - generic [ref=e518]:
+                  - text: Investigations
+                  - textbox "Investigations" [ref=e519]: Confirm tube placement clinically and with CO2; bilateral chest rise; auscultation Post-intubation vitals trending; consider repeat ABG after stabilization
+                - generic [ref=e520]:
+                  - text: Expected actions
+                  - textbox "Expected actions" [ref=e521]: "Perform RSI with clear role assignment and closed-loop medication delivery Limit apnea time; optimize first-pass success (positioning, pre-oxygenation, apneic oxygenation if available) Confirm ETT placement; secure tube; start continuous sedation/analgesia Initiate ventilator settings appropriate for severe asthma: low RR, low tidal volume/moderate, high inspiratory flow, long expiratory time; monitor for auto-PEEP and hypotension If hypotension occurs, treat with fluids/vasopressors as appropriate and reduce minute ventilation to mitigate breath stacking"
+                - generic [ref=e522]:
+                  - text: Remarks
+                  - textbox "Remarks" [ref=e523]: "If learners struggle with ventilation after intubation, prompt consideration of breath stacking and the need to disconnect circuit briefly to allow full exhalation (instructor cue). If learners request alternative airway: allow LMA as rescue if intubation fails (Capability: Laryngeal mask airway insertion)."
+                - generic [ref=e524]:
+                  - text: Instructor control
+                  - textbox "Instructor control" [ref=e525]: If intubation is performed effectively, SpO2 improves to 95% within 60-90 seconds after ventilation begins If learners hyperventilate (high RR), then BP drops to 86/50 with rising peak pressures (simulate dynamic hyperinflation); improve when they decrease RR and allow expiratory time If prolonged attempt without oxygenation, desaturate to low 80s; allow recovery with BVM and reattempt
+                - generic [ref=e526]:
+                  - text: Transition rule
+                  - combobox "Transition rule" [ref=e527]:
+                    - option "next" [selected]
+                    - option "auto"
+                    - option "handler"
+            - generic [ref=e528]:
+              - generic [ref=e529]:
+                - paragraph [ref=e530]: State 5
+                - button "Remove" [ref=e531]
+              - generic [ref=e532]: State name
+              - textbox [ref=e533]: "State 5: Post-intubation stabilization—ventilator strategy and reassessment"
+              - generic [ref=e534]:
+                - generic [ref=e535]:
+                  - generic [ref=e536]: bp
+                  - textbox "bp" [ref=e537]: 126/76
+                - generic [ref=e538]:
+                  - generic [ref=e539]: pr
+                  - textbox "pr" [ref=e540]: "104"
+                - generic [ref=e541]:
+                  - generic [ref=e542]: rr
+                  - textbox "rr" [ref=e543]: 12 (ventilator set rate)
+                - generic [ref=e544]:
+                  - generic [ref=e545]: spo2
+                  - textbox "spo2" [ref=e546]: 96%
+                - generic [ref=e547]:
+                  - generic [ref=e548]: rhythm
+                  - textbox "rhythm" [ref=e549]: Sinus tachycardia
+              - generic [ref=e550]:
+                - generic [ref=e551]:
+                  - text: Physical exam
+                  - textbox "Physical exam" [ref=e552]: "Sedated, mechanically ventilated; synchronized with ventilator Chest rise present bilaterally; improved air entry with persistent wheeze (Lung Sound: Wheezes) Perfusion improving; pulses strong; Capability: Palpation of pulses"
+                - generic [ref=e553]:
+                  - text: Investigations
+                  - textbox "Investigations" [ref=e554]: "ABG after stabilization: pH 7.24, pCO2 65 (permissive hypercapnia), pO2 90, HCO3 28 Repeat portable CXR: ETT in appropriate position; no pneumothorax"
+                - generic [ref=e555]:
+                  - text: Expected actions
+                  - textbox "Expected actions" [ref=e556]: "Reassess ventilation strategy: ensure long expiratory time, avoid breath stacking; accept permissive hypercapnia if hemodynamically stable Continue bronchodilator therapy via inline nebulization as available; continue steroids Ensure adequate sedation/analgesia; consider paralysis only if severe ventilator dyssynchrony despite sedation (per local practice) Communicate disposition: ICU admission; structured handover with key events, meds given, ventilator strategy, and pending issues Team debrief-in-action: summarize what went well and what to monitor next (auto-PEEP, hypotension, pneumothorax)"
+                - generic [ref=e557]:
+                  - text: Remarks
+                  - textbox "Remarks" [ref=e558]: "Scenario endpoint: patient stabilized for ICU transfer with clear plan and communication. If learners ask about triggers: URI and poor controller adherence."
+                - generic [ref=e559]:
+                  - text: Instructor control
+                  - textbox "Instructor control" [ref=e560]: If learners maintain appropriate ventilator settings, keep vitals stable If learners increase RR significantly, recreate hypotension/air trapping pattern to reinforce learning, then allow correction
+                - generic [ref=e561]:
+                  - text: Transition rule
+                  - combobox "Transition rule" [ref=e562]:
+                    - option "next" [selected]
+                    - option "auto"
+                    - option "handler"
+        - generic [ref=e233]:
+          - generic [ref=e234]:
+            - heading "10. Equipment" [level=2] [ref=e235]
+            - generic [ref=e236]:
+              - button "Lock" [ref=e237]
+              - button "AI Fill Section" [ref=e238]
+          - button "+ Add equipment row" [ref=e240]
+          - table [ref=e242]:
+            - rowgroup [ref=e243]:
+              - row "Category Item Qty Remarks Action" [ref=e244]:
+                - columnheader "Category" [ref=e245]
+                - columnheader "Item" [ref=e246]
+                - columnheader "Qty" [ref=e247]
+                - columnheader "Remarks" [ref=e248]
+                - columnheader "Action" [ref=e249]
+            - rowgroup [ref=e250]:
+              - row "Airway and breathing Oxygen delivery (nasal cannula, non-rebreather mask) 1 set Start with non-rebreather available at bedside Remove" [ref=e563]:
+                - cell "Airway and breathing" [ref=e252]:
+                  - textbox [ref=e253]: Airway and breathing
+                - cell "Oxygen delivery (nasal cannula, non-rebreather mask)" [ref=e564]:
+                  - textbox [ref=e255]: Oxygen delivery (nasal cannula, non-rebreather mask)
+                - cell "1 set" [ref=e565]:
+                  - textbox [ref=e257]: 1 set
+                - cell "Start with non-rebreather available at bedside" [ref=e566]:
+                  - textbox [ref=e259]: Start with non-rebreather available at bedside
+                - cell "Remove" [ref=e260]:
+                  - button "Remove" [ref=e261]
+              - row "Airway and breathing Nebulizer setup for continuous bronchodilator therapy 1 Albuterol/ipratropium delivery method per site (nebulizer or inline) Remove" [ref=e567]:
+                - cell "Airway and breathing" [ref=e568]:
+                  - textbox [ref=e569]: Airway and breathing
+                - cell "Nebulizer setup for continuous bronchodilator therapy" [ref=e570]:
+                  - textbox [ref=e571]: Nebulizer setup for continuous bronchodilator therapy
+                - cell "1" [ref=e572]:
+                  - textbox [ref=e573]: "1"
+                - cell "Albuterol/ipratropium delivery method per site (nebulizer or inline)" [ref=e574]:
+                  - textbox [ref=e575]: Albuterol/ipratropium delivery method per site (nebulizer or inline)
+                - cell "Remove" [ref=e576]:
+                  - button "Remove" [ref=e577]
+              - row "Airway and breathing Bag-valve-mask with PEEP valve 1 Emphasize gentle ventilation and prolonged exhalation Remove" [ref=e578]:
+                - cell "Airway and breathing" [ref=e579]:
+                  - textbox [ref=e580]: Airway and breathing
+                - cell "Bag-valve-mask with PEEP valve" [ref=e581]:
+                  - textbox [ref=e582]: Bag-valve-mask with PEEP valve
+                - cell "1" [ref=e583]:
+                  - textbox [ref=e584]: "1"
+                - cell "Emphasize gentle ventilation and prolonged exhalation" [ref=e585]:
+                  - textbox [ref=e586]: Emphasize gentle ventilation and prolonged exhalation
+                - cell "Remove" [ref=e587]:
+                  - button "Remove" [ref=e588]
+              - 'row "Airway and breathing Suction setup (Yankauer + catheter) 1 Capability: Suctioning Remove" [ref=e589]':
+                - cell "Airway and breathing" [ref=e590]:
+                  - textbox [ref=e591]: Airway and breathing
+                - cell "Suction setup (Yankauer + catheter)" [ref=e592]:
+                  - textbox [ref=e593]: Suction setup (Yankauer + catheter)
+                - cell "1" [ref=e594]:
+                  - textbox [ref=e595]: "1"
+                - 'cell "Capability: Suctioning" [ref=e596]':
+                  - textbox [ref=e597]: "Capability: Suctioning"
+                - cell "Remove" [ref=e598]:
+                  - button "Remove" [ref=e599]
+              - row "Airway and breathing Endotracheal tubes (7.5, 8.0) with stylet 2-3 Securement device and syringe for cuff Remove" [ref=e600]:
+                - cell "Airway and breathing" [ref=e601]:
+                  - textbox [ref=e602]: Airway and breathing
+                - cell "Endotracheal tubes (7.5, 8.0) with stylet" [ref=e603]:
+                  - textbox [ref=e604]: Endotracheal tubes (7.5, 8.0) with stylet
+                - cell "2-3" [ref=e605]:
+                  - textbox [ref=e606]: 2-3
+                - cell "Securement device and syringe for cuff" [ref=e607]:
+                  - textbox [ref=e608]: Securement device and syringe for cuff
+                - cell "Remove" [ref=e609]:
+                  - button "Remove" [ref=e610]
+              - row "Airway and breathing Laryngoscope/video laryngoscope (as available) 1 Include backup blades Remove" [ref=e611]:
+                - cell "Airway and breathing" [ref=e612]:
+                  - textbox [ref=e613]: Airway and breathing
+                - cell "Laryngoscope/video laryngoscope (as available)" [ref=e614]:
+                  - textbox [ref=e615]: Laryngoscope/video laryngoscope (as available)
+                - cell "1" [ref=e616]:
+                  - textbox [ref=e617]: "1"
+                - cell "Include backup blades" [ref=e618]:
+                  - textbox [ref=e619]: Include backup blades
+                - cell "Remove" [ref=e620]:
+                  - button "Remove" [ref=e621]
+              - 'row "Airway and breathing Laryngeal mask airway 1 Rescue device; Capability: Laryngeal mask airway insertion Remove" [ref=e622]':
+                - cell "Airway and breathing" [ref=e623]:
+                  - textbox [ref=e624]: Airway and breathing
+                - cell "Laryngeal mask airway" [ref=e625]:
+                  - textbox [ref=e626]: Laryngeal mask airway
+                - cell "1" [ref=e627]:
+                  - textbox [ref=e628]: "1"
+                - 'cell "Rescue device; Capability: Laryngeal mask airway insertion" [ref=e629]':
+                  - textbox [ref=e630]: "Rescue device; Capability: Laryngeal mask airway insertion"
+                - cell "Remove" [ref=e631]:
+                  - button "Remove" [ref=e632]
+              - row "Monitoring and IV access Cardiac monitor, pulse oximeter, NIBP cuff 1 Use existing monitor setup parameters Remove" [ref=e633]:
+                - cell "Monitoring and IV access" [ref=e634]:
+                  - textbox [ref=e635]: Monitoring and IV access
+                - cell "Cardiac monitor, pulse oximeter, NIBP cuff" [ref=e636]:
+                  - textbox [ref=e637]: Cardiac monitor, pulse oximeter, NIBP cuff
+                - cell "1" [ref=e638]:
+                  - textbox [ref=e639]: "1"
+                - cell "Use existing monitor setup parameters" [ref=e640]:
+                  - textbox [ref=e641]: Use existing monitor setup parameters
+                - cell "Remove" [ref=e642]:
+                  - button "Remove" [ref=e643]
+              - row "Monitoring and IV access IV cannulas, tubing, saline flushes 2 Two large-bore IVs preferred Remove" [ref=e644]:
+                - cell "Monitoring and IV access" [ref=e645]:
+                  - textbox [ref=e646]: Monitoring and IV access
+                - cell "IV cannulas, tubing, saline flushes" [ref=e647]:
+                  - textbox [ref=e648]: IV cannulas, tubing, saline flushes
+                - cell "2" [ref=e649]:
+                  - textbox [ref=e650]: "2"
+                - cell "Two large-bore IVs preferred" [ref=e651]:
+                  - textbox [ref=e652]: Two large-bore IVs preferred
+                - cell "Remove" [ref=e653]:
+                  - button "Remove" [ref=e654]
+              - row "Medications Albuterol, ipratropium, systemic steroid, magnesium sulfate 1 set Dosing per local policy; include infusion supplies for magnesium Remove" [ref=e655]:
+                - cell "Medications" [ref=e656]:
+                  - textbox [ref=e657]: Medications
+                - cell "Albuterol, ipratropium, systemic steroid, magnesium sulfate" [ref=e658]:
+                  - textbox [ref=e659]: Albuterol, ipratropium, systemic steroid, magnesium sulfate
+                - cell "1 set" [ref=e660]:
+                  - textbox [ref=e661]: 1 set
+                - cell "Dosing per local policy; include infusion supplies for magnesium" [ref=e662]:
+                  - textbox [ref=e663]: Dosing per local policy; include infusion supplies for magnesium
+                - cell "Remove" [ref=e664]:
+                  - button "Remove" [ref=e665]
+              - row "Medications RSI meds and post-intubation sedation/analgesia 1 set Include induction agent, neuromuscular blocker, analgesic, sedative infusion supplies Remove" [ref=e666]:
+                - cell "Medications" [ref=e667]:
+                  - textbox [ref=e668]: Medications
+                - cell "RSI meds and post-intubation sedation/analgesia" [ref=e669]:
+                  - textbox [ref=e670]: RSI meds and post-intubation sedation/analgesia
+                - cell "1 set" [ref=e671]:
+                  - textbox [ref=e672]: 1 set
+                - cell "Include induction agent, neuromuscular blocker, analgesic, sedative infusion supplies" [ref=e673]:
+                  - textbox [ref=e674]: Include induction agent, neuromuscular blocker, analgesic, sedative infusion supplies
+                - cell "Remove" [ref=e675]:
+                  - button "Remove" [ref=e676]
+              - row "Miscellaneous Airway checklist and role labels 1 Promote structured communication and closed-loop orders Remove" [ref=e677]:
+                - cell "Miscellaneous" [ref=e678]:
+                  - textbox [ref=e679]: Miscellaneous
+                - cell "Airway checklist and role labels" [ref=e680]:
+                  - textbox [ref=e681]: Airway checklist and role labels
+                - cell "1" [ref=e682]:
+                  - textbox [ref=e683]: "1"
+                - cell "Promote structured communication and closed-loop orders" [ref=e684]:
+                  - textbox [ref=e685]: Promote structured communication and closed-loop orders
+                - cell "Remove" [ref=e686]:
+                  - button "Remove" [ref=e687]
+        - generic [ref=e262]:
+          - generic [ref=e263]:
+            - heading "11. Debrief Information" [level=2] [ref=e264]
+            - generic [ref=e265]:
+              - button "Lock" [ref=e266]
+              - button "AI Fill Section" [ref=e267]
+          - generic [ref=e268]:
+            - generic [ref=e269]:
+              - text: Number Of Debriefers
+              - textbox "Number Of Debriefers" [ref=e270]: 1-2
+            - generic [ref=e271]:
+              - text: Debrief Room Setup
+              - textbox "Debrief Room Setup" [ref=e272]: Quiet room with seating in a circle; whiteboard for timeline and key decisions
+            - generic [ref=e273]:
+              - text: Debrief Description
+              - textbox "Debrief Description" [ref=e274]: Facilitated debrief focusing on (1) assessment and escalation, (2) recognition of silent chest/fatigue and rising CO2, (3) RSI preparation and first-pass success strategies, (4) ventilator management in severe asthma and avoidance of dynamic hyperinflation, and (5) teamwork behaviors (role assignment, closed-loop communication, shared mental model).
+            - generic [ref=e275]:
+              - text: Logistics Required
+              - textbox "Logistics Required" [ref=e276]: Download/print patient summary, medication record, and ABG results; prepare airway checklist; ensure audio/video playback available if used.
+        - generic [ref=e277]:
+          - generic [ref=e278]:
+            - heading "12. Simulator / SP / Task Trainer Preparation" [level=2] [ref=e279]
+            - generic [ref=e280]:
+              - button "Lock" [ref=e281]
+              - button "AI Fill Section" [ref=e282]
+          - generic [ref=e283]:
+            - textbox "One entry per line" [ref=e284]: "Program baseline severe asthma: high work of breathing with wheeze (Lung Sound: Wheezes), tachypnea, tachycardia; Capability: Spontaneous breathing; Capability: Bilateral chest rise and fall. Prepare progression to fatigue: RR slows, mental status declines, air movement decreases to (Lung Sound: Absent breath sounds). Enable airway interventions: Capability: Bag-mask ventilation; Capability: Suctioning; Capability: Intubation; have LMA rescue available (Capability: Laryngeal mask airway insertion). Set monitor to show sinus tachycardia throughout; adjust SpO2 responses to oxygenation and ventilation as per state cues. Prepare instructor prompts for teamwork: request role assignment, medication read-backs, and pre-intubation time-out. Prepare results handouts: CXR (hyperinflation), ABG trend (rising CO2, acidosis), post-intubation CXR confirmation."
+            - button "Add row" [ref=e286]
+        - generic [ref=e287]:
+          - generic [ref=e288]:
+            - heading "13. Patient Monitor Setup" [level=2] [ref=e289]
+            - generic [ref=e290]:
+              - button "Lock" [ref=e291]
+              - button "AI Fill Section" [ref=e292]
+          - generic [ref=e293]:
+            - paragraph [ref=e294]: Monitor Layout
+            - generic [ref=e295]:
+              - generic [ref=e296]:
+                - checkbox "5 waveform" [checked] [ref=e297]
+                - text: 5 waveform
+              - generic [ref=e298]:
+                - checkbox "4 waveform" [ref=e299]
+                - text: 4 waveform
+              - generic [ref=e300]:
+                - checkbox "3 waveform" [ref=e301]
+                - text: 3 waveform
+              - generic [ref=e302]:
+                - checkbox "Big Num layout" [ref=e303]
+                - text: Big Num layout
+          - generic [ref=e304]:
+            - paragraph [ref=e305]: Monitor Parameters
+            - generic [ref=e307]:
+              - generic [ref=e308]:
+                - checkbox "Primary Electrocardiogram" [checked] [ref=e309]
+                - text: Primary Electrocardiogram
+              - generic [ref=e310]:
+                - checkbox "Secondary Electrocardiogram" [ref=e311]
+                - text: Secondary Electrocardiogram
+              - generic [ref=e312]:
+                - checkbox "ABP - Arterial Blood Pressure" [ref=e313]
+                - text: ABP - Arterial Blood Pressure
+              - generic [ref=e314]:
+                - checkbox "SPO2 (Plethysmogram)" [checked] [ref=e315]
+                - text: SPO2 (Plethysmogram)
+              - generic [ref=e316]:
+                - checkbox "PAP - Pulmonary Artery Pressure" [ref=e317]
+                - text: PAP - Pulmonary Artery Pressure
+              - generic [ref=e318]:
+                - checkbox "CO2 – End-tidal Carbon Dioxide" [ref=e319]
+                - text: CO2 – End-tidal Carbon Dioxide
+              - generic [ref=e320]:
+                - checkbox "pH – Aterial pH" [ref=e321]
+                - text: pH – Aterial pH
+              - generic [ref=e322]:
+                - checkbox "CVP - Central Venous Pressure" [ref=e323]
+                - text: CVP - Central Venous Pressure
+              - generic [ref=e324]:
+                - checkbox "NBP- Non-invasive Blood Pressure" [checked] [ref=e325]
+                - text: NBP- Non-invasive Blood Pressure
+              - generic [ref=e326]:
+                - checkbox "TOF - Train Of Four" [ref=e327]
+                - text: TOF - Train Of Four
+              - generic [ref=e328]:
+                - checkbox "N2O - Nitrous Oxide" [ref=e329]
+                - text: N2O - Nitrous Oxide
+              - generic [ref=e330]:
+                - checkbox "O2 - Oxygen pressure" [ref=e331]
+                - text: O2 - Oxygen pressure
+              - generic [ref=e332]:
+                - checkbox "Pulse" [checked] [ref=e333]
+                - text: Pulse
+              - generic [ref=e334]:
+                - checkbox "WP – Wedge Pattern" [ref=e335]
+                - text: WP – Wedge Pattern
+              - generic [ref=e336]:
+                - checkbox "RR - Airway Respiration Rate" [ref=e337]
+                - text: RR - Airway Respiration Rate
+              - generic [ref=e338]:
+                - checkbox "C.O. - Cardiac Output" [ref=e339]
+                - text: C.O. - Cardiac Output
+              - generic [ref=e340]:
+                - checkbox "TPeri - Peripheral Temperature" [ref=e341]
+                - text: TPeri - Peripheral Temperature
+              - generic [ref=e342]:
+                - checkbox "Tblood - Invasive blood temperature" [ref=e343]
+                - text: Tblood - Invasive blood temperature
+              - generic [ref=e344]:
+                - checkbox "ICP - Intracranial pressure" [ref=e345]
+                - text: ICP - Intracranial pressure
+              - generic [ref=e346]:
+                - checkbox "AGT – Agent" [ref=e347]
+                - text: AGT – Agent
+              - generic [ref=e348]:
+                - checkbox "HR- Heart Rate" [checked] [ref=e349]
+                - text: HR- Heart Rate
+        - generic [ref=e350]:
+          - generic [ref=e351]:
+            - heading "14. Document Information" [level=2] [ref=e352]
+            - generic [ref=e353]:
+              - button "Lock" [ref=e354]
+              - button "AI Fill Section" [ref=e355]
+          - generic [ref=e356]:
+            - generic [ref=e357]:
+              - text: Author
+              - textbox "Author" [ref=e358]: SIMTAC Scenario Builder AI
+            - generic [ref=e359]:
+              - text: Designation
+              - textbox "Designation" [ref=e360]: Simulation Scenario Generator
+            - generic [ref=e361]:
+              - text: Department
+              - textbox "Department" [ref=e362]: Emergency Medicine / Simulation Program
+            - generic [ref=e363]:
+              - text: Date Scenario Developed
+              - textbox "Date Scenario Developed" [ref=e364]: 2026-03-02
+            - generic [ref=e365]:
+              - text: Date Scenario Updated
+              - textbox "Date Scenario Updated" [ref=e366]: 2026-03-02
+      - complementary [ref=e367]:
+        - generic [ref=e368]:
+          - heading "AI Controls" [level=3] [ref=e369]
+          - generic [ref=e370]:
+            - generic [ref=e371]:
+              - button "Instant" [ref=e372]
+              - button "Thinking" [ref=e373]
+            - generic [ref=e374]:
+              - text: "Thinking depth: 1"
+              - 'slider "Thinking depth: 1" [ref=e375]': "1"
+            - generic [ref=e376]:
+              - text: Model
+              - textbox "Model" [ref=e377]: gpt-5.2
+            - generic [ref=e378]:
+              - button "Update Unlocked with AI" [ref=e688]
+              - button "Validate" [ref=e380]
+              - button "Export DOCX" [ref=e381]
+        - generic [ref=e382]:
+          - heading "Section Locks (1/14)" [level=3] [ref=e418]
+          - generic [ref=e384]:
+            - button "[Locked] 1. Course & Trainee" [ref=e419]
+            - button "[Open] 2. Learning Objectives" [ref=e386]
+            - button "[Open] 3. Clinical Setting" [ref=e387]
+            - button "[Open] 4. Instructors" [ref=e388]
+            - button "[Open] 5. Confederates" [ref=e389]
+            - button "[Open] 6. Trainee Roles" [ref=e390]
+            - button "[Open] 7. Patient Information" [ref=e391]
+            - button "[Open] 8. Scenario Information" [ref=e392]
+            - button "[Open] 9. Scenario Flow" [ref=e393]
+            - button "[Open] 10. Equipment" [ref=e394]
+            - button "[Open] 11. Debrief Info" [ref=e395]
+            - button "[Open] 12. Simulator Prep" [ref=e396]
+            - button "[Open] 13. Monitor Setup" [ref=e397]
+            - button "[Open] 14. Document Info" [ref=e398]
+          - button "Unlock all sections" [ref=e399]
+        - generic [ref=e400]:
+          - heading "Validation Warnings" [level=3] [ref=e401]
+          - generic [ref=e689]:
+            - paragraph [ref=e690]: SIM-VENT-01
+            - paragraph [ref=e691]: Ventilator parameters are described conceptually rather than as specific device settings. Ensure alignment with local ventilator model and institutional asthma ventilation protocol.
+            - paragraph [ref=e692]: "Try: Add site-specific initial ventilator settings (mode, RR, Vt, I:E, flow) per local policy., Include a local checklist for managing auto-PEEP and hypotension after intubation in asthma."
+        - generic [ref=e404]:
+          - heading "Source Grounding" [level=3] [ref=e405]
+          - generic [ref=e406]:
+            - generic [ref=e693]:
+              - paragraph [ref=e694]: Global Initiative for Asthma (GINA) Strategy Report
+              - paragraph [ref=e695]: Severe exacerbations require repeated/continuous inhaled short-acting beta-agonists, systemic corticosteroids, and careful monitoring for deterioration; patients with rising PaCO2, fatigue, or altered mental status require urgent escalation of care.
+            - generic [ref=e696]:
+              - paragraph [ref=e697]: Critical care/ED asthma ventilation principles (review consensus)
+              - paragraph [ref=e698]: In mechanically ventilated severe asthma, use low respiratory rate and prolonged expiratory time to minimize dynamic hyperinflation; permissive hypercapnia may be acceptable to avoid excessive airway pressures and breath stacking.
+        - generic [ref=e408]:
+          - heading "Knowledge Library Admin" [level=3] [ref=e409]
+          - generic [ref=e410]:
+            - textbox "Admin passcode" [ref=e411]
+            - generic [ref=e412]:
+              - button "List files" [ref=e413]
+              - generic [ref=e414]: Choose file
+            - button "Upload selected file" [ref=e415]
+  - button "Open Next.js Dev Tools" [ref=e20] [cursor=pointer]:
+    - img [ref=e21]
+  - alert [ref=e24]

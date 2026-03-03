@@ -1,0 +1,4 @@
+### Ran Playwright code
+```js
+await page.getByRole('textbox', { name: 'Optional guidance for AI' }).fill('Generate a surgical ward post-op day 2 patient who deteriorates to abdominal sepsis and septic shock; emphasize early recognition, source-control escalation, antibiotics, fluids, vasopressors, and ICU handover.');
+```

@@ -1,0 +1,6 @@
+Total messages: 4 (Errors: 0, Warnings: 0)
+
+[VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3000/login?next=%2F:0
+[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/7d626_next_dist_e768cca1._.js:2297
+[LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/7d626_next_dist_e768cca1._.js:2297
+[VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3000/:0

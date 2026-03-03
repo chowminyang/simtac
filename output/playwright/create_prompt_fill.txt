@@ -1,0 +1,4 @@
+### Ran Playwright code
+```js
+await page.getByRole('textbox', { name: 'Describe your scenario goals' }).fill('Create a 25-minute ED septic shock scenario for a 72-year-old diabetic patient with pneumonia progressing from compensated sepsis to hypotensive shock. Include 5 states with clear transition triggers, expected team actions, airway/oxygen escalation, fluids, cultures, antibiotics, vasopressor decision, communication SBAR, and debrief focus on recognition of deterioration. Use only SimMan-supported monitor parameters and heart/lung/bowel sounds.');
+```

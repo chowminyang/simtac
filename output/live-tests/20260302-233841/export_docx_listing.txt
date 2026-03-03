@@ -1,0 +1,29 @@
+Archive:  output/live-tests/20260302-233841/exported_scenario.docx
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  03-02-2026 15:45   word/
+        0  03-02-2026 15:45   word/_rels/
+     1223  03-02-2026 15:45   word/_rels/document.xml.rels
+    47431  03-02-2026 15:45   word/document.xml
+     4259  03-02-2026 15:45   word/styles.xml
+        0  03-02-2026 15:45   docProps/
+      643  03-02-2026 15:45   docProps/core.xml
+     3172  03-02-2026 15:45   word/numbering.xml
+        0  03-02-2026 15:45   _rels/
+      718  03-02-2026 15:45   _rels/.rels
+     2104  03-02-2026 15:45   [Content_Types].xml
+      228  03-02-2026 15:45   docProps/custom.xml
+      230  03-02-2026 15:45   docProps/app.xml
+     1709  03-02-2026 15:45   word/footnotes.xml
+      123  03-02-2026 15:45   word/_rels/footnotes.xml.rels
+     1682  03-02-2026 15:45   word/endnotes.xml
+      123  03-02-2026 15:45   word/_rels/endnotes.xml.rels
+     1395  03-02-2026 15:45   word/settings.xml
+     2246  03-02-2026 15:45   word/comments.xml
+      123  03-02-2026 15:45   word/_rels/comments.xml.rels
+      835  03-02-2026 15:45   word/fontTable.xml
+      123  03-02-2026 15:45   word/_rels/fontTable.xml.rels
+        0  03-02-2026 15:45   word/media/
+  1575046  03-02-2026 15:45   word/media/5decbf903bfb178c17a3d6e89dc1583ed35436c4.png
+---------                     -------
+  1643413                     24 files

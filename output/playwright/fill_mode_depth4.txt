@@ -1,0 +1,4 @@
+### Ran Playwright code
+```js
+await page.getByRole('slider', { name: 'Thinking depth:' }).fill('4');
+```

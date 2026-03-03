@@ -1,0 +1,2 @@
+[POST] http://127.0.0.1:3000/api/scenario/generate => [200] OK
+[POST] http://127.0.0.1:3000/api/scenario/export-docx => [200] OK

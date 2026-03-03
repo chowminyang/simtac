@@ -1,0 +1,3 @@
+Browser 'default' closed
+
+No user data found for browser 'default'.

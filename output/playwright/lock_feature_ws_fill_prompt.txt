@@ -1,0 +1,4 @@
+### Ran Playwright code
+```js
+await page.getByRole('textbox', { name: 'Optional guidance for AI' }).fill('Generate a post-operative abdominal sepsis simulation with progression to shock, source-control escalation, and ICU handover.');
+```

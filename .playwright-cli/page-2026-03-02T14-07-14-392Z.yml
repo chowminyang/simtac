@@ -1,0 +1,577 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - heading "SIMTAC AI Scenario Builder" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Generate and refine medical simulation scenarios with strict SimMan capability checks and direct DOCX export.
+      - paragraph [ref=e7]: Ready.
+    - generic [ref=e25]:
+      - complementary [ref=e26]:
+        - button "Back to mode selection" [ref=e27]
+        - list [ref=e28]:
+          - listitem [ref=e29]:
+            - button "1. Course & Trainee" [ref=e30]
+          - listitem [ref=e31]:
+            - button "2. Learning Objectives" [ref=e32]
+          - listitem [ref=e33]:
+            - button "3. Clinical Setting" [ref=e34]
+          - listitem [ref=e35]:
+            - button "4. Instructors" [ref=e36]
+          - listitem [ref=e37]:
+            - button "5. Confederates" [ref=e38]
+          - listitem [ref=e39]:
+            - button "6. Trainee Roles" [ref=e40]
+          - listitem [ref=e41]:
+            - button "7. Patient Information" [ref=e42]
+          - listitem [ref=e43]:
+            - button "8. Scenario Information" [ref=e44]
+          - listitem [ref=e45]:
+            - button "9. Scenario Flow" [ref=e46]
+          - listitem [ref=e47]:
+            - button "10. Equipment" [ref=e48]
+          - listitem [ref=e49]:
+            - button "11. Debrief Info" [ref=e50]
+          - listitem [ref=e51]:
+            - button "12. Simulator Prep" [ref=e52]
+          - listitem [ref=e53]:
+            - button "13. Monitor Setup" [ref=e54]
+          - listitem [ref=e55]:
+            - button "14. Document Info" [ref=e56]
+      - main [ref=e57]:
+        - generic [ref=e58]:
+          - heading "Scenario Prompt" [level=2] [ref=e59]
+          - textbox "Describe your scenario goals, progression, expected learner actions, and clinical context..." [ref=e60]
+          - button "Generate Scenario" [ref=e62]
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - heading "1. Course & Trainee Information" [level=2] [ref=e65]
+            - generic [ref=e66]:
+              - button "Lock" [ref=e67]
+              - button "AI Fill Section" [ref=e68]
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - generic [ref=e71]:
+                - text: Course Title
+                - button "Course Title" [ref=e72]: Lock field
+              - textbox [ref=e73]
+            - generic [ref=e74]:
+              - generic [ref=e75]:
+                - text: Department
+                - button "Department" [ref=e76]: Lock field
+              - textbox [ref=e77]
+            - generic [ref=e78]:
+              - generic [ref=e79]:
+                - text: Scenario Title
+                - button "Scenario Title" [ref=e80]: Lock field
+              - textbox [ref=e81]
+            - generic [ref=e82]:
+              - generic [ref=e83]:
+                - text: Target Learner Group
+                - button "Target Learner Group" [ref=e84]: Lock field
+              - textbox [ref=e85]
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - text: Number Of Trainees
+                - button "Number Of Trainees" [ref=e88]: Lock field
+              - textbox [ref=e89]
+            - generic [ref=e90]:
+              - generic [ref=e91]:
+                - text: Number Of Instructors
+                - button "Number Of Instructors" [ref=e92]: Lock field
+              - textbox [ref=e93]
+            - generic [ref=e94]:
+              - generic [ref=e95]:
+                - text: Level Of Experience
+                - button "Level Of Experience" [ref=e96]: Lock field
+              - textbox [ref=e97]
+            - generic [ref=e98]:
+              - generic [ref=e99]:
+                - text: Prerequisite Knowledge
+                - button "Prerequisite Knowledge" [ref=e100]: Lock field
+              - textbox [ref=e101]
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - heading "2. Specific Learning Objectives" [level=2] [ref=e104]
+            - generic [ref=e105]:
+              - button "Lock" [ref=e106]
+              - button "AI Fill Section" [ref=e107]
+          - generic [ref=e108]:
+            - button "Lock field" [ref=e110]
+            - textbox "One entry per line" [ref=e111]
+            - button "Add row" [ref=e113]
+        - generic [ref=e114]:
+          - generic [ref=e115]:
+            - heading "3. Clinical / Environment Setting" [level=2] [ref=e116]
+            - generic [ref=e117]:
+              - button "Lock" [ref=e118]
+              - button "AI Fill Section" [ref=e119]
+          - generic [ref=e120]:
+            - generic [ref=e121]: Setting required
+            - button "Lock field" [ref=e122]
+          - textbox [ref=e123]
+          - generic [ref=e124]:
+            - generic [ref=e125]: Remarks
+            - button "Lock field" [ref=e126]
+          - textbox [ref=e127]
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - heading "4. Instructor Information" [level=2] [ref=e130]
+            - generic [ref=e131]:
+              - button "Lock" [ref=e132]
+              - button "AI Fill Section" [ref=e133]
+          - generic [ref=e134]:
+            - button "Lock field" [ref=e136]
+            - textbox "One entry per line" [ref=e137]
+            - button "Add row" [ref=e139]
+        - generic [ref=e140]:
+          - generic [ref=e141]:
+            - heading "5. Confederate Information" [level=2] [ref=e142]
+            - generic [ref=e143]:
+              - button "Lock" [ref=e144]
+              - button "AI Fill Section" [ref=e145]
+          - generic [ref=e146]:
+            - button "Lock field" [ref=e148]
+            - textbox "One entry per line" [ref=e149]
+            - button "Add row" [ref=e151]
+        - generic [ref=e152]:
+          - generic [ref=e153]:
+            - heading "6. Trainees Role" [level=2] [ref=e154]
+            - generic [ref=e155]:
+              - button "Lock" [ref=e156]
+              - button "AI Fill Section" [ref=e157]
+          - generic [ref=e158]:
+            - button "Lock field" [ref=e160]
+            - textbox "One entry per line" [ref=e161]
+            - button "Add row" [ref=e163]
+        - generic [ref=e164]:
+          - generic [ref=e165]:
+            - heading "7. Patient Information" [level=2] [ref=e166]
+            - generic [ref=e167]:
+              - button "Lock" [ref=e168]
+              - button "AI Fill Section" [ref=e169]
+          - generic [ref=e170]:
+            - generic [ref=e171]:
+              - generic [ref=e172]:
+                - text: Name
+                - button "Name" [ref=e173]: Lock field
+              - textbox [ref=e174]
+            - generic [ref=e176]:
+              - generic [ref=e177]:
+                - checkbox "Show On Monitor Before Start" [ref=e178]
+                - text: Show On Monitor Before Start
+              - button "Lock field" [ref=e179]
+            - generic [ref=e181]:
+              - generic [ref=e182]:
+                - checkbox "Make Available During Simulation" [ref=e183]
+                - text: Make Available During Simulation
+              - button "Lock field" [ref=e184]
+            - generic [ref=e185]:
+              - generic [ref=e186]:
+                - text: Identification No
+                - button "Identification No" [ref=e187]: Lock field
+              - textbox [ref=e188]
+            - generic [ref=e189]:
+              - generic [ref=e190]:
+                - text: Race
+                - button "Race" [ref=e191]: Lock field
+              - textbox [ref=e192]
+            - generic [ref=e193]:
+              - generic [ref=e194]:
+                - text: Age
+                - button "Age" [ref=e195]: Lock field
+              - textbox [ref=e196]
+            - generic [ref=e197]:
+              - generic [ref=e198]:
+                - text: Gender
+                - button "Gender" [ref=e199]: Lock field
+              - textbox [ref=e200]
+            - generic [ref=e201]:
+              - generic [ref=e202]:
+                - text: Weight
+                - button "Weight" [ref=e203]: Lock field
+              - textbox [ref=e204]
+            - generic [ref=e205]:
+              - generic [ref=e206]:
+                - text: Height
+                - button "Height" [ref=e207]: Lock field
+              - textbox [ref=e208]
+            - generic [ref=e209]:
+              - generic [ref=e210]:
+                - text: Past Medical And Social History
+                - button "Past Medical And Social History" [ref=e211]: Lock field
+              - textbox [ref=e212]
+            - generic [ref=e213]:
+              - generic [ref=e214]:
+                - text: Current Medications
+                - button "Current Medications" [ref=e215]: Lock field
+              - textbox [ref=e216]
+            - generic [ref=e217]:
+              - generic [ref=e218]:
+                - text: Food Drug Allergies
+                - button "Food Drug Allergies" [ref=e219]: Lock field
+              - textbox [ref=e220]
+            - generic [ref=e221]:
+              - generic [ref=e222]:
+                - text: Primary Care Provider
+                - button "Primary Care Provider" [ref=e223]: Lock field
+              - textbox [ref=e224]
+            - generic [ref=e225]:
+              - generic [ref=e226]:
+                - text: Presenting Complaint History
+                - button "Presenting Complaint History" [ref=e227]: Lock field
+              - textbox [ref=e228]
+        - generic [ref=e229]:
+          - generic [ref=e230]:
+            - heading "8. Scenario Information" [level=2] [ref=e231]
+            - generic [ref=e232]:
+              - button "Lock" [ref=e233]
+              - button "AI Fill Section" [ref=e234]
+          - generic [ref=e235]:
+            - generic [ref=e236]:
+              - generic [ref=e237]:
+                - text: Time Allocated For Scenario
+                - button "Time Allocated For Scenario" [ref=e238]: Lock field
+              - textbox [ref=e239]
+            - generic [ref=e240]:
+              - generic [ref=e241]:
+                - text: Time Allocated For Debrief
+                - button "Time Allocated For Debrief" [ref=e242]: Lock field
+              - textbox [ref=e243]
+            - generic [ref=e244]:
+              - generic [ref=e245]:
+                - text: Scenario Summary
+                - button "Scenario Summary" [ref=e246]: Lock field
+              - textbox [ref=e247]
+            - generic [ref=e248]:
+              - generic [ref=e249]:
+                - text: Scenario Information To Trainees
+                - button "Scenario Information To Trainees" [ref=e250]: Lock field
+              - textbox [ref=e251]
+            - generic [ref=e252]:
+              - generic [ref=e253]:
+                - text: Transition Mode
+                - button "Transition Mode next" [ref=e254]: Lock field
+              - textbox [ref=e255]: next
+        - generic [ref=e256]:
+          - generic [ref=e257]:
+            - heading "9. Scenario Flow" [level=2] [ref=e258]
+            - generic [ref=e259]:
+              - button "Lock" [ref=e260]
+              - button "AI Fill Section" [ref=e261]
+          - generic [ref=e262]:
+            - paragraph [ref=e263]: State-by-state simulator control and expected action flow.
+            - button "+ Add state" [ref=e264]
+          - generic [ref=e266]:
+            - generic [ref=e267]:
+              - paragraph [ref=e268]: State 1
+              - button "Remove" [disabled] [ref=e269]
+            - generic [ref=e270]:
+              - generic [ref=e271]: State name
+              - button "Lock field" [ref=e272]
+            - textbox [ref=e273]
+            - generic [ref=e274]:
+              - generic [ref=e275]:
+                - generic [ref=e276]:
+                  - text: bp
+                  - button "bp" [ref=e277]: Lock
+                - textbox [ref=e278]
+              - generic [ref=e279]:
+                - generic [ref=e280]:
+                  - text: pr
+                  - button "pr" [ref=e281]: Lock
+                - textbox [ref=e282]
+              - generic [ref=e283]:
+                - generic [ref=e284]:
+                  - text: rr
+                  - button "rr" [ref=e285]: Lock
+                - textbox [ref=e286]
+              - generic [ref=e287]:
+                - generic [ref=e288]:
+                  - text: spo2
+                  - button "spo2" [ref=e289]: Lock
+                - textbox [ref=e290]
+              - generic [ref=e291]:
+                - generic [ref=e292]:
+                  - text: rhythm
+                  - button "rhythm" [ref=e293]: Lock
+                - textbox [ref=e294]
+            - generic [ref=e295]:
+              - generic [ref=e296]:
+                - generic [ref=e297]:
+                  - text: Physical exam
+                  - button "Physical exam" [ref=e298]: Lock field
+                - textbox [ref=e299]
+              - generic [ref=e300]:
+                - generic [ref=e301]:
+                  - text: Investigations
+                  - button "Investigations" [ref=e302]: Lock field
+                - textbox [ref=e303]
+              - generic [ref=e304]:
+                - generic [ref=e305]:
+                  - text: Expected actions
+                  - button "Expected actions" [ref=e306]: Lock field
+                - textbox [ref=e307]
+              - generic [ref=e308]:
+                - generic [ref=e309]:
+                  - text: Remarks
+                  - button "Remarks" [ref=e310]: Lock field
+                - textbox [ref=e311]
+              - generic [ref=e312]:
+                - generic [ref=e313]:
+                  - text: Instructor control
+                  - button "Instructor control" [ref=e314]: Lock field
+                - textbox [ref=e315]
+              - generic [ref=e316]:
+                - generic [ref=e317]:
+                  - text: Transition rule
+                  - button "Transition rule next" [ref=e318]: Lock field
+                - combobox [ref=e319]:
+                  - option "next" [selected]
+                  - option "auto"
+                  - option "handler"
+        - generic [ref=e320]:
+          - generic [ref=e321]:
+            - heading "10. Equipment" [level=2] [ref=e322]
+            - generic [ref=e323]:
+              - button "Lock" [ref=e324]
+              - button "AI Fill Section" [ref=e325]
+          - button "+ Add equipment row" [ref=e327]
+          - table [ref=e329]:
+            - rowgroup [ref=e330]:
+              - row "Category Item Qty Remarks Action" [ref=e331]:
+                - columnheader "Category" [ref=e332]
+                - columnheader "Item" [ref=e333]
+                - columnheader "Qty" [ref=e334]
+                - columnheader "Remarks" [ref=e335]
+                - columnheader "Action" [ref=e336]
+            - rowgroup [ref=e337]:
+              - row "Airway and breathing Lock Lock Lock Lock Remove" [ref=e338]:
+                - cell "Airway and breathing Lock" [ref=e339]:
+                  - generic [ref=e340]:
+                    - textbox [ref=e341]: Airway and breathing
+                    - button "Lock" [ref=e342]
+                - cell "Lock" [ref=e343]:
+                  - generic [ref=e344]:
+                    - textbox [ref=e345]
+                    - button "Lock" [ref=e346]
+                - cell "Lock" [ref=e347]:
+                  - generic [ref=e348]:
+                    - textbox [ref=e349]
+                    - button "Lock" [ref=e350]
+                - cell "Lock" [ref=e351]:
+                  - generic [ref=e352]:
+                    - textbox [ref=e353]
+                    - button "Lock" [ref=e354]
+                - cell "Remove" [ref=e355]:
+                  - button "Remove" [disabled] [ref=e356]
+        - generic [ref=e357]:
+          - generic [ref=e358]:
+            - heading "11. Debrief Information" [level=2] [ref=e359]
+            - generic [ref=e360]:
+              - button "Lock" [ref=e361]
+              - button "AI Fill Section" [ref=e362]
+          - generic [ref=e363]:
+            - generic [ref=e364]:
+              - generic [ref=e365]:
+                - text: Number Of Debriefers
+                - button "Number Of Debriefers" [ref=e366]: Lock field
+              - textbox [ref=e367]
+            - generic [ref=e368]:
+              - generic [ref=e369]:
+                - text: Debrief Room Setup
+                - button "Debrief Room Setup" [ref=e370]: Lock field
+              - textbox [ref=e371]
+            - generic [ref=e372]:
+              - generic [ref=e373]:
+                - text: Debrief Description
+                - button "Debrief Description" [ref=e374]: Lock field
+              - textbox [ref=e375]
+            - generic [ref=e376]:
+              - generic [ref=e377]:
+                - text: Logistics Required
+                - button "Logistics Required" [ref=e378]: Lock field
+              - textbox [ref=e379]
+        - generic [ref=e380]:
+          - generic [ref=e381]:
+            - heading "12. Simulator / SP / Task Trainer Preparation" [level=2] [ref=e382]
+            - generic [ref=e383]:
+              - button "Lock" [ref=e384]
+              - button "AI Fill Section" [ref=e385]
+          - generic [ref=e386]:
+            - button "Lock field" [ref=e388]
+            - textbox "One entry per line" [ref=e389]
+            - button "Add row" [ref=e391]
+        - generic [ref=e392]:
+          - generic [ref=e393]:
+            - heading "13. Patient Monitor Setup" [level=2] [ref=e394]
+            - generic [ref=e395]:
+              - button "Lock" [ref=e396]
+              - button "AI Fill Section" [ref=e397]
+          - generic [ref=e398]:
+            - paragraph [ref=e399]: Monitor Layout
+            - generic [ref=e400]:
+              - generic [ref=e401]:
+                - checkbox "5 waveform" [checked] [ref=e402]
+                - text: 5 waveform
+              - generic [ref=e403]:
+                - checkbox "4 waveform" [ref=e404]
+                - text: 4 waveform
+              - generic [ref=e405]:
+                - checkbox "3 waveform" [ref=e406]
+                - text: 3 waveform
+              - generic [ref=e407]:
+                - checkbox "Big Num layout" [ref=e408]
+                - text: Big Num layout
+          - generic [ref=e409]:
+            - paragraph [ref=e410]: Monitor Parameters
+            - generic [ref=e412]:
+              - generic [ref=e413]:
+                - checkbox "Primary Electrocardiogram" [checked] [ref=e414]
+                - text: Primary Electrocardiogram
+              - generic [ref=e415]:
+                - checkbox "Secondary Electrocardiogram" [ref=e416]
+                - text: Secondary Electrocardiogram
+              - generic [ref=e417]:
+                - checkbox "ABP - Arterial Blood Pressure" [ref=e418]
+                - text: ABP - Arterial Blood Pressure
+              - generic [ref=e419]:
+                - checkbox "SPO2 (Plethysmogram)" [checked] [ref=e420]
+                - text: SPO2 (Plethysmogram)
+              - generic [ref=e421]:
+                - checkbox "PAP - Pulmonary Artery Pressure" [ref=e422]
+                - text: PAP - Pulmonary Artery Pressure
+              - generic [ref=e423]:
+                - checkbox "CO2 – End-tidal Carbon Dioxide" [ref=e424]
+                - text: CO2 – End-tidal Carbon Dioxide
+              - generic [ref=e425]:
+                - checkbox "pH – Aterial pH" [ref=e426]
+                - text: pH – Aterial pH
+              - generic [ref=e427]:
+                - checkbox "CVP - Central Venous Pressure" [ref=e428]
+                - text: CVP - Central Venous Pressure
+              - generic [ref=e429]:
+                - checkbox "NBP- Non-invasive Blood Pressure" [checked] [ref=e430]
+                - text: NBP- Non-invasive Blood Pressure
+              - generic [ref=e431]:
+                - checkbox "TOF - Train Of Four" [ref=e432]
+                - text: TOF - Train Of Four
+              - generic [ref=e433]:
+                - checkbox "N2O - Nitrous Oxide" [ref=e434]
+                - text: N2O - Nitrous Oxide
+              - generic [ref=e435]:
+                - checkbox "O2 - Oxygen pressure" [ref=e436]
+                - text: O2 - Oxygen pressure
+              - generic [ref=e437]:
+                - checkbox "Pulse" [checked] [ref=e438]
+                - text: Pulse
+              - generic [ref=e439]:
+                - checkbox "WP – Wedge Pattern" [ref=e440]
+                - text: WP – Wedge Pattern
+              - generic [ref=e441]:
+                - checkbox "RR - Airway Respiration Rate" [ref=e442]
+                - text: RR - Airway Respiration Rate
+              - generic [ref=e443]:
+                - checkbox "C.O. - Cardiac Output" [ref=e444]
+                - text: C.O. - Cardiac Output
+              - generic [ref=e445]:
+                - checkbox "TPeri - Peripheral Temperature" [ref=e446]
+                - text: TPeri - Peripheral Temperature
+              - generic [ref=e447]:
+                - checkbox "Tblood - Invasive blood temperature" [ref=e448]
+                - text: Tblood - Invasive blood temperature
+              - generic [ref=e449]:
+                - checkbox "ICP - Intracranial pressure" [ref=e450]
+                - text: ICP - Intracranial pressure
+              - generic [ref=e451]:
+                - checkbox "AGT – Agent" [ref=e452]
+                - text: AGT – Agent
+              - generic [ref=e453]:
+                - checkbox "HR- Heart Rate" [checked] [ref=e454]
+                - text: HR- Heart Rate
+        - generic [ref=e455]:
+          - generic [ref=e456]:
+            - heading "14. Document Information" [level=2] [ref=e457]
+            - generic [ref=e458]:
+              - button "Lock" [ref=e459]
+              - button "AI Fill Section" [ref=e460]
+          - generic [ref=e461]:
+            - generic [ref=e462]:
+              - generic [ref=e463]:
+                - text: Author
+                - button "Author" [ref=e464]: Lock field
+              - textbox [ref=e465]
+            - generic [ref=e466]:
+              - generic [ref=e467]:
+                - text: Designation
+                - button "Designation" [ref=e468]: Lock field
+              - textbox [ref=e469]
+            - generic [ref=e470]:
+              - generic [ref=e471]:
+                - text: Department
+                - button "Department" [ref=e472]: Lock field
+              - textbox [ref=e473]
+            - generic [ref=e474]:
+              - generic [ref=e475]:
+                - text: Date Scenario Developed
+                - button "Date Scenario Developed" [ref=e476]: Lock field
+              - textbox [ref=e477]
+            - generic [ref=e478]:
+              - generic [ref=e479]:
+                - text: Date Scenario Updated
+                - button "Date Scenario Updated" [ref=e480]: Lock field
+              - textbox [ref=e481]
+      - complementary [ref=e482]:
+        - generic [ref=e483]:
+          - heading "AI Controls" [level=3] [ref=e484]
+          - generic [ref=e485]:
+            - generic [ref=e486]:
+              - button "Instant" [ref=e487]
+              - button "Thinking" [ref=e488]
+            - generic [ref=e489]:
+              - text: "Thinking depth: 1"
+              - 'slider "Thinking depth: 1" [ref=e490]': "1"
+            - generic [ref=e491]:
+              - text: Model
+              - textbox "Model" [ref=e492]: gpt-5.2
+            - generic [ref=e493]:
+              - button "Update Unlocked with AI" [ref=e494]
+              - button "Validate" [ref=e495]
+              - button "Export DOCX" [ref=e496]
+        - generic [ref=e497]:
+          - heading "Section Locks (0/14)" [level=3] [ref=e498]
+          - generic [ref=e499]:
+            - button "[Open] 1. Course & Trainee" [ref=e500]
+            - button "[Open] 2. Learning Objectives" [ref=e501]
+            - button "[Open] 3. Clinical Setting" [ref=e502]
+            - button "[Open] 4. Instructors" [ref=e503]
+            - button "[Open] 5. Confederates" [ref=e504]
+            - button "[Open] 6. Trainee Roles" [ref=e505]
+            - button "[Open] 7. Patient Information" [ref=e506]
+            - button "[Open] 8. Scenario Information" [ref=e507]
+            - button "[Open] 9. Scenario Flow" [ref=e508]
+            - button "[Open] 10. Equipment" [ref=e509]
+            - button "[Open] 11. Debrief Info" [ref=e510]
+            - button "[Open] 12. Simulator Prep" [ref=e511]
+            - button "[Open] 13. Monitor Setup" [ref=e512]
+            - button "[Open] 14. Document Info" [ref=e513]
+          - button "Unlock all sections" [ref=e514]
+        - generic [ref=e515]:
+          - heading "Field Locks (0)" [level=3] [ref=e516]
+          - paragraph [ref=e517]: Use each box-level Lock field button to pin individual inputs.
+          - button "Clear all field locks" [ref=e518]
+        - generic [ref=e519]:
+          - heading "Validation Warnings" [level=3] [ref=e520]
+          - paragraph [ref=e522]: No validation warnings.
+        - generic [ref=e523]:
+          - heading "Source Grounding" [level=3] [ref=e524]
+          - paragraph [ref=e526]: No citations captured yet.
+        - generic [ref=e527]:
+          - heading "Knowledge Library Admin" [level=3] [ref=e528]
+          - generic [ref=e529]:
+            - textbox "Admin passcode" [ref=e530]
+            - generic [ref=e531]:
+              - button "List files" [ref=e532]
+              - generic [ref=e533]: Choose file
+            - button "Upload selected file" [ref=e534]
+  - button "Open Next.js Dev Tools" [ref=e20] [cursor=pointer]:
+    - img [ref=e21]
+  - alert [ref=e24]

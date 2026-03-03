@@ -1,0 +1,10 @@
+### Browser `default` opened with pid 29644.
+- default:
+  - browser-type: chrome
+  - user-data-dir: <in-memory>
+  - headed: false
+---
+### Page
+- Page URL: about:blank
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-03-02T13-39-02-029Z.yml)

@@ -1,0 +1,9 @@
+### Error
+Error: locator.fill: Error: Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]
+Call log:
+[2m  - waiting for locator('aria-ref=e59')[22m
+[2m    - locator resolved to <h2 class="text-lg font-semibold">Scenario Prompt</h2>[22m
+[2m    - fill("Generate a surgical ward post-op day 2 patient who deteriorates to abdominal sepsis and septic shock; emphasize early recognition, source-control escalation, antibiotics, fluids, vasopressors, and ICU handover.")[22m
+[2m  - attempting fill action[22m
+[2m    - waiting for element to be visible, enabled and editable[22m
+

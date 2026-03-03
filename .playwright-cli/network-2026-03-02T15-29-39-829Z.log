@@ -1,0 +1,4 @@
+[POST] http://localhost:3000/api/auth/login => [200] OK
+[GET] http://localhost:3000/?_rsc=5c339 => [200] OK
+[GET] http://localhost:3000/?_rsc=1godm => [200] OK
+[POST] http://localhost:3000/api/scenario/generate

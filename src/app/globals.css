@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f7f7;
+  --foreground: #1e2a33;
+  --panel: #ffffff;
+  --muted: #5d6b75;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-heading);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), "Segoe UI", "Helvetica Neue", sans-serif;
+  line-height: 1.45;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), var(--font-body), "Segoe UI", sans-serif;
+  letter-spacing: -0.01em;
+}
+
+* {
+  box-sizing: border-box;
+}
