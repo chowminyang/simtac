@@ -1,5 +1,105 @@
 import { expect, test } from "@playwright/test";
 
+const ONE_PIXEL_PNG_DATA_URL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+XlQAAAAASUVORK5CYII=";
+
+function createSavedImageStoragePayload(dataUrl: string) {
+  const scenario = {
+    courseInfo: {
+      courseTitle: "",
+      department: "",
+      scenarioTitle: "",
+      targetLearnerGroup: "",
+      numberOfTrainees: "",
+      numberOfInstructors: "",
+      levelOfExperience: "",
+      prerequisiteKnowledge: "",
+    },
+    objectives: ["", "", "", ""],
+    clinicalSetting: { settingRequired: "", remarks: "" },
+    instructors: [""],
+    confederates: [""],
+    traineeRoles: [""],
+    patientInfo: {
+      name: "",
+      showOnMonitorBeforeStart: false,
+      makeAvailableDuringSimulation: false,
+      identificationNo: "",
+      race: "",
+      age: "",
+      gender: "",
+      weight: "",
+      height: "",
+      pastMedicalAndSocialHistory: "",
+      currentMedications: "",
+      foodDrugAllergies: "",
+      primaryCareProvider: "",
+      presentingComplaintHistory: "",
+    },
+    scenarioInfo: {
+      timeAllocatedForScenario: "",
+      timeAllocatedForDebrief: "",
+      scenarioSummary: "",
+      scenarioInformationToTrainees: "",
+      transitionMode: "next",
+    },
+    scenarioFlow: [
+      {
+        stateName: "",
+        vitalSigns: { bp: "", pr: "", rr: "", spo2: "", rhythm: "" },
+        physicalExamDisplayedOnSimMan: [""],
+        physicalExamVolunteeredByInstructor: [""],
+        investigations: [""],
+        expectedActions: [""],
+        remarks: [""],
+        instructorControl: [""],
+        transitionRule: "next",
+      },
+    ],
+    equipment: [{ category: "Airway and breathing", item: "", quantity: "", remarks: "" }],
+    debriefInfo: { numberOfDebriefers: "", debriefRoomSetup: "", debriefDescription: "", logisticsRequired: "" },
+    simulatorPrep: [""],
+    monitorSetup: {
+      layout: ["5 waveform"],
+      parameters: [
+        "Primary Electrocardiogram",
+        "SPO2 (Plethysmogram)",
+        "NBP- Non-invasive Blood Pressure",
+        "HR- Heart Rate",
+        "Pulse",
+      ],
+    },
+    appendixImages: [
+      {
+        id: "saved_preview_seed_1",
+        prompt: "Singapore ward simulation bedside scene",
+        revisedPrompt: "Singapore ward simulation bedside scene",
+        caption: "Saved preview image",
+        dataUrl,
+        mimeType: "image/png",
+        model: "gpt-image-1.5",
+        size: "1024x1024",
+        createdAt: "2026-03-03T00:00:00.000Z",
+      },
+    ],
+    documentInfo: {
+      author: "",
+      designation: "",
+      department: "",
+      dateScenarioDeveloped: "",
+      dateScenarioUpdated: "",
+    },
+  };
+
+  return {
+    mode: "worksheet_assist",
+    scenario,
+    thinkingDepth: 1,
+    showLeftSidebar: true,
+    showRightSidebar: true,
+  };
+}
+
 async function unlockSite(page: import("@playwright/test").Page) {
   const sitePassword = process.env.SITE_ACCESS_PASSWORD || process.env.KNOWLEDGE_ADMIN_PASSCODE || "humeaine";
 
@@ -10,6 +110,15 @@ async function unlockSite(page: import("@playwright/test").Page) {
   }
 
   await expect(page.getByText("SIMTAC AI Scenario Builder")).toBeVisible();
+}
+
+async function seedSavedImageDraft(page: import("@playwright/test").Page) {
+  await page.addInitScript((payload) => {
+    window.localStorage.setItem(
+      "simtac_scenario_builder_v1",
+      JSON.stringify(payload),
+    );
+  }, createSavedImageStoragePayload(ONE_PIXEL_PNG_DATA_URL));
 }
 
 test("landing allows choosing creation mode and editing worksheet", async ({ page }) => {
@@ -140,4 +249,48 @@ test("field lock and update dialog workflow are available", async ({ page }) => 
   await expect(dialogField).toHaveValue("Focus on airway-first progression and clearer transition criteria.");
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("heading", { name: "Update Unlocked with AI" })).toHaveCount(0);
+});
+
+test("saved image click opens full preview popup", async ({ page }) => {
+  await seedSavedImageDraft(page);
+  await unlockSite(page);
+
+  const fillWorksheetButton = page.getByRole("button", { name: "Fill Worksheet" });
+  if (await fillWorksheetButton.count()) {
+    await fillWorksheetButton.first().click();
+  }
+
+  await page
+    .locator("aside")
+    .first()
+    .getByRole("button", { name: "15. Simulation Images", exact: true })
+    .click();
+
+  const openPreviewButton = page.getByRole("button", { name: "Open saved image 1 preview" }).first();
+  if ((await openPreviewButton.count()) === 0) {
+    await page.evaluate((payload) => {
+      window.localStorage.setItem("simtac_scenario_builder_v1", JSON.stringify(payload));
+    }, createSavedImageStoragePayload(ONE_PIXEL_PNG_DATA_URL));
+    await page.reload();
+
+    const fillButtonAfterReload = page.getByRole("button", { name: "Fill Worksheet" });
+    if (await fillButtonAfterReload.count()) {
+      await fillButtonAfterReload.first().click();
+    }
+    await page
+      .locator("aside")
+      .first()
+      .getByRole("button", { name: "15. Simulation Images", exact: true })
+      .click();
+  }
+  await expect(openPreviewButton).toBeVisible();
+  await openPreviewButton.click();
+
+  const previewDialog = page.getByRole("dialog", { name: "Saved Image Preview" });
+  await expect(previewDialog).toBeVisible();
+  await expect(previewDialog.getByRole("heading", { name: "Saved Image Preview" })).toBeVisible();
+  await expect(previewDialog.locator("p").first()).toContainText("Saved preview image");
+
+  await previewDialog.getByRole("button", { name: "Close" }).click();
+  await expect(previewDialog).toHaveCount(0);
 });

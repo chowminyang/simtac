@@ -330,12 +330,13 @@ export function ScenarioBuilderApp() {
   const [imageQuality, setImageQuality] = useState<"low" | "medium" | "high" | "auto">("medium");
   const [generatedImages, setGeneratedImages] = useState<ScenarioAppendixImage[]>([]);
   const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({});
+  const [previewImage, setPreviewImage] = useState<ScenarioAppendixImage | null>(null);
   const [imageBusy, setImageBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [busySection, setBusySection] = useState<SectionKey | null>(null);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [updateDialogPrompt, setUpdateDialogPrompt] = useState("");
-  const [statusMessage, setStatusMessage] = useState("Ready. Singapore healthcare context is enabled by default.");
+  const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const sectionRefs = useRef<Record<NavigationSectionKey, HTMLElement | null>>({
@@ -475,6 +476,19 @@ export function ScenarioBuilderApp() {
       return next;
     });
   }, [scenario.scenarioFlow.length]);
+
+  useEffect(() => {
+    if (!previewImage) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPreviewImage(null);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [previewImage]);
 
   const config = useMemo(
     () => ({
@@ -986,6 +1000,7 @@ export function ScenarioBuilderApp() {
     setImageQuality("medium");
     setGeneratedImages([]);
     setCaptionDrafts({});
+    setPreviewImage(null);
     setUpdateDialogOpen(false);
     setUpdateDialogPrompt("");
     setErrorMessage("");
@@ -1007,7 +1022,7 @@ export function ScenarioBuilderApp() {
               <p className="mt-2 max-w-4xl text-sm text-slate-700">
                 Generate and refine Singapore-context medical simulation scenarios with strict SimMan capability checks and direct DOCX export.
               </p>
-              <p className="mt-2 text-xs text-slate-600">{statusMessage}</p>
+              {statusMessage ? <p className="mt-2 text-xs text-slate-600">{statusMessage}</p> : null}
               {errorMessage ? <p className="mt-1 text-sm text-rose-700">{errorMessage}</p> : null}
             </div>
             <Image
@@ -2025,14 +2040,22 @@ export function ScenarioBuilderApp() {
 
                         return (
                           <article key={image.id || `appendix-${index}`} className="rounded-xl border border-slate-300 bg-white p-3">
-                            <Image
-                              src={image.dataUrl}
-                              alt={image.caption || image.revisedPrompt || image.prompt || "Saved appendix image"}
-                              width={640}
-                              height={352}
-                              unoptimized
-                              className="h-44 w-full rounded-md border border-slate-200 object-cover"
-                            />
+                            <button
+                              type="button"
+                              className="block w-full"
+                              onClick={() => setPreviewImage(image)}
+                              aria-label={`Open saved image ${index + 1} preview`}
+                            >
+                              <Image
+                                src={image.dataUrl}
+                                alt={image.caption || image.revisedPrompt || image.prompt || "Saved appendix image"}
+                                width={640}
+                                height={352}
+                                unoptimized
+                                className="h-44 w-full rounded-md border border-slate-200 object-cover transition hover:opacity-95"
+                              />
+                            </button>
+                            <p className="mt-1 text-[11px] text-slate-500">Click image to view full size.</p>
                             <label className="mt-2 block text-xs font-medium uppercase tracking-wide text-slate-600">
                               Caption
                               <textarea
@@ -2328,6 +2351,47 @@ export function ScenarioBuilderApp() {
           </div>
         )}
       </div>
+
+      {previewImage ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Saved Image Preview"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold">Saved Image Preview</h2>
+                <p className="mt-1 text-sm text-slate-700">
+                  {previewImage.caption.trim() || previewImage.revisedPrompt || previewImage.prompt || "Saved simulation image"}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-3 py-1 text-sm"
+                onClick={() => setPreviewImage(null)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="max-h-[75vh] overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
+              <Image
+                src={previewImage.dataUrl}
+                alt={previewImage.caption || previewImage.revisedPrompt || previewImage.prompt || "Saved simulation image"}
+                width={1600}
+                height={1200}
+                unoptimized
+                className="mx-auto h-auto max-h-[72vh] w-full rounded-md object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {updateDialogOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">

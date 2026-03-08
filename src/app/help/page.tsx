@@ -118,6 +118,7 @@ export default function HelpPage() {
             <li>Click `Save to Scenario` to attach selected images to this scenario.</li>
             <li>Edit captions and click `Save Caption` to commit each caption.</li>
             <li>`Discard Edit` reverts unsaved caption changes.</li>
+            <li>Click any saved image to open a full-size preview popup.</li>
             <li>Saved images are included automatically in the DOCX export image section.</li>
           </ul>
         </section>
