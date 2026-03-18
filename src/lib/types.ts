@@ -1,5 +1,5 @@
 export type GenerationMode = "ai_prompt" | "worksheet_assist";
-export type ThinkingDepth = 0 | 1 | 2;
+export type ThinkingDepth = 0 | 1 | 2 | 3 | 4;
 
 export interface GenerationConfig {
   thinkingDepth: ThinkingDepth;

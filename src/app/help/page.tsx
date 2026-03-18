@@ -14,7 +14,7 @@ export default function HelpPage() {
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
             <li>Log in with the site password.</li>
             <li>Choose `Create with AI` or `Fill Worksheet`.</li>
-            <li>Set `Thinking depth` (`0`, `1`, or `2`) in the right panel.</li>
+            <li>Set `Thinking depth` (`0` to `4`) in the right panel.</li>
             <li>Generate or fill content, then edit directly in the worksheet.</li>
             <li>Lock anything you want to preserve before re-running AI.</li>
             <li>Run `Validate` and review warnings.</li>
@@ -93,9 +93,11 @@ export default function HelpPage() {
           <h2 className="text-lg font-semibold">8. AI Controls</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
             <li>`Thinking depth` controls reasoning effort and generation time.</li>
-            <li>`0`: fastest drafting.</li>
-            <li>`1`: balanced speed and detail.</li>
-            <li>`2`: deeper reasoning for complex scenarios and richer progression logic.</li>
+            <li>`0`: instant drafting.</li>
+            <li>`1`: minimum reasoning.</li>
+            <li>`2`: medium reasoning.</li>
+            <li>`3`: high reasoning.</li>
+            <li>`4`: maximum reasoning effort.</li>
             <li>Model selection is fixed by app configuration and not editable in the UI.</li>
           </ul>
         </section>

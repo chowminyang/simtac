@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import JSZip from "jszip";
+import mammoth from "mammoth";
 
 import { buildScenarioDocx, buildExportFileName } from "@/lib/docx-export";
 import { DEFAULT_SCENARIO } from "@/lib/scenario-defaults";
@@ -11,6 +13,31 @@ describe("docx export", () => {
 
     const buffer = await buildScenarioDocx(scenario);
     expect(buffer.byteLength).toBeGreaterThan(1200);
+  });
+
+  it("humanizes section field labels in the exported docx", async () => {
+    const scenario = structuredClone(DEFAULT_SCENARIO);
+    scenario.courseInfo.courseTitle = "Acute Medical Emergency Simulation";
+    scenario.courseInfo.levelOfExperience = "Beginner to intermediate";
+
+    const buffer = await buildScenarioDocx(scenario);
+    const { value: text } = await mammoth.extractRawText({ buffer });
+
+    expect(text).toContain("Course Title:");
+    expect(text).toContain("Level of Experience:");
+    expect(text).not.toContain("courseTitle:");
+  });
+
+  it("marks sections 9 and 10 as landscape in the exported docx", async () => {
+    const scenario = structuredClone(DEFAULT_SCENARIO);
+    scenario.scenarioFlow.push(structuredClone(scenario.scenarioFlow[0]));
+    scenario.equipment.push({ category: "Monitoring", item: "ECG", quantity: "1", remarks: "" });
+
+    const buffer = await buildScenarioDocx(scenario);
+    const zip = await JSZip.loadAsync(buffer);
+    const documentXml = await zip.file("word/document.xml")?.async("text");
+
+    expect(documentXml ?? "").toContain('w:orient="landscape"');
   });
 
   it("builds a deterministic filename shape", () => {

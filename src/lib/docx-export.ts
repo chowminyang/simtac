@@ -5,6 +5,7 @@ import {
   ImageRun,
   Packer,
   Paragraph,
+  PageOrientation,
   Table,
   TableCell,
   TableLayoutType,
@@ -13,6 +14,7 @@ import {
   WidthType,
 } from "docx";
 
+import { formatFieldLabel } from "./label-format";
 import type { ScenarioDocument } from "./types";
 
 type AppendixImageForExport = {
@@ -195,9 +197,15 @@ function sizeToDimensions(size: string): { width: number; height: number } {
 }
 
 export async function buildScenarioDocx(scenario: ScenarioDocument): Promise<Buffer> {
-  const blocks: Array<Paragraph | Table> = [];
+  const portraitBlocks: Array<Paragraph | Table> = [];
+  const landscapeBlocks: Array<Paragraph | Table> = [];
+  const closingBlocks: Array<Paragraph | Table> = [];
 
-  blocks.push(
+  const addPortrait = (...blocks: Array<Paragraph | Table>) => portraitBlocks.push(...blocks);
+  const addLandscape = (...blocks: Array<Paragraph | Table>) => landscapeBlocks.push(...blocks);
+  const addClosing = (...blocks: Array<Paragraph | Table>) => closingBlocks.push(...blocks);
+
+  addPortrait(
     new Paragraph({
       text: "SIMTAC Scenario Development Worksheet",
       heading: HeadingLevel.TITLE,
@@ -205,58 +213,58 @@ export async function buildScenarioDocx(scenario: ScenarioDocument): Promise<Buf
     }),
   );
 
-  blocks.push(heading("1. Course and Trainee Information"));
+  addPortrait(heading("1. Course and Trainee Information"));
   Object.entries(scenario.courseInfo).forEach(([key, value]) => {
-    blocks.push(keyValueParagraph(key, value));
+    addPortrait(keyValueParagraph(formatFieldLabel(key), value));
   });
 
-  blocks.push(heading("2. Specific Learning Objectives"));
-  blocks.push(...stringList(scenario.objectives));
+  addPortrait(heading("2. Specific Learning Objectives"));
+  addPortrait(...stringList(scenario.objectives));
 
-  blocks.push(heading("3. Clinical / Environment Setting"));
-  blocks.push(keyValueParagraph("Setting required", scenario.clinicalSetting.settingRequired));
-  blocks.push(keyValueParagraph("Remarks", scenario.clinicalSetting.remarks));
+  addPortrait(heading("3. Clinical / Environment Setting"));
+  addPortrait(keyValueParagraph("Setting required", scenario.clinicalSetting.settingRequired));
+  addPortrait(keyValueParagraph("Remarks", scenario.clinicalSetting.remarks));
 
-  blocks.push(heading("4. Instructor Information"));
-  blocks.push(...stringList(scenario.instructors));
+  addPortrait(heading("4. Instructor Information"));
+  addPortrait(...stringList(scenario.instructors));
 
-  blocks.push(heading("5. Confederate Information"));
-  blocks.push(...stringList(scenario.confederates));
+  addPortrait(heading("5. Confederate Information"));
+  addPortrait(...stringList(scenario.confederates));
 
-  blocks.push(heading("6. Trainees Role"));
-  blocks.push(...stringList(scenario.traineeRoles));
+  addPortrait(heading("6. Trainees Role"));
+  addPortrait(...stringList(scenario.traineeRoles));
 
-  blocks.push(heading("7. Patient Information"));
+  addPortrait(heading("7. Patient Information"));
   Object.entries(scenario.patientInfo).forEach(([key, value]) => {
-    blocks.push(keyValueParagraph(key, value));
+    addPortrait(keyValueParagraph(formatFieldLabel(key), value));
   });
 
-  blocks.push(heading("8. Scenario Information"));
+  addPortrait(heading("8. Scenario Information"));
   Object.entries(scenario.scenarioInfo).forEach(([key, value]) => {
-    blocks.push(keyValueParagraph(key, value));
+    addPortrait(keyValueParagraph(formatFieldLabel(key), value));
   });
 
-  blocks.push(heading("9. Scenario Flow"));
-  blocks.push(stateFlowTable(scenario));
+  addLandscape(heading("9. Scenario Flow"));
+  addLandscape(stateFlowTable(scenario));
 
-  blocks.push(heading("10. Equipment"));
-  blocks.push(equipmentTable(scenario));
+  addLandscape(heading("10. Equipment"));
+  addLandscape(equipmentTable(scenario));
 
-  blocks.push(heading("11. Debrief Information"));
+  addClosing(heading("11. Debrief Information"));
   Object.entries(scenario.debriefInfo).forEach(([key, value]) => {
-    blocks.push(keyValueParagraph(key, value));
+    addClosing(keyValueParagraph(formatFieldLabel(key), value));
   });
 
-  blocks.push(heading("12. Simulator / Standardised Patient / Task Trainer Preparation"));
-  blocks.push(...stringList(scenario.simulatorPrep));
+  addClosing(heading("12. Simulator / Standardised Patient / Task Trainer Preparation"));
+  addClosing(...stringList(scenario.simulatorPrep));
 
-  blocks.push(heading("13. Patient Monitor Setup"));
-  blocks.push(keyValueParagraph("Layout", scenario.monitorSetup.layout.join(", ")));
-  blocks.push(keyValueParagraph("Parameters", scenario.monitorSetup.parameters.join(", ")));
+  addClosing(heading("13. Patient Monitor Setup"));
+  addClosing(keyValueParagraph("Layout", scenario.monitorSetup.layout.join(", ")));
+  addClosing(keyValueParagraph("Parameters", scenario.monitorSetup.parameters.join(", ")));
 
-  blocks.push(heading("14. Document Information"));
+  addClosing(heading("14. Document Information"));
   Object.entries(scenario.documentInfo).forEach(([key, value]) => {
-    blocks.push(keyValueParagraph(key, value));
+    addClosing(keyValueParagraph(formatFieldLabel(key), value));
   });
 
   const appendixImages: AppendixImageForExport[] = scenario.appendixImages
@@ -280,19 +288,19 @@ export async function buildScenarioDocx(scenario: ScenarioDocument): Promise<Buf
     }));
 
   if (appendixImages.length > 0) {
-    blocks.push(heading("Appendix A. Generated Simulation Images"));
+    addClosing(heading("Appendix A. Generated Simulation Images"));
 
     appendixImages.forEach((image, index) => {
       const dimensions = sizeToDimensions(image.size);
       const title = image.caption.trim() || image.revisedPrompt.trim() || image.prompt.trim() || `Image ${index + 1}`;
 
-      blocks.push(
+      addClosing(
         new Paragraph({
           children: [new TextRun({ text: `A${index + 1}. ${title}`, bold: true })],
           spacing: { before: 180, after: 80 },
         }),
       );
-      blocks.push(
+      addClosing(
         new Paragraph({
           alignment: AlignmentType.CENTER,
           spacing: { after: 80 },
@@ -305,9 +313,9 @@ export async function buildScenarioDocx(scenario: ScenarioDocument): Promise<Buf
           ],
         }),
       );
-      blocks.push(keyValueParagraph("Prompt", image.prompt));
+      addClosing(keyValueParagraph("Prompt", image.prompt));
       if (image.revisedPrompt && image.revisedPrompt !== image.prompt) {
-        blocks.push(keyValueParagraph("Revised prompt", image.revisedPrompt));
+        addClosing(keyValueParagraph("Revised prompt", image.revisedPrompt));
       }
     });
   }
@@ -315,7 +323,20 @@ export async function buildScenarioDocx(scenario: ScenarioDocument): Promise<Buf
   const document = new Document({
     sections: [
       {
-        children: blocks,
+        children: portraitBlocks,
+      },
+      {
+        properties: {
+          page: {
+            size: {
+              orientation: PageOrientation.LANDSCAPE,
+            },
+          },
+        },
+        children: landscapeBlocks,
+      },
+      {
+        children: closingBlocks,
       },
     ],
   });

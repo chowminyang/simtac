@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 
 import { normalizeToDmyDate } from "@/lib/date-format";
+import { formatFieldLabel } from "@/lib/label-format";
 import { DEFAULT_SCENARIO } from "@/lib/scenario-defaults";
 import {
   ALLOWED_MONITOR_LAYOUTS,
@@ -375,7 +376,9 @@ export function ScenarioBuilderApp() {
       if (
         parsed.thinkingDepth === 0 ||
         parsed.thinkingDepth === 1 ||
-        parsed.thinkingDepth === 2
+        parsed.thinkingDepth === 2 ||
+        parsed.thinkingDepth === 3 ||
+        parsed.thinkingDepth === 4
       ) {
         setThinkingDepth(parsed.thinkingDepth as ThinkingDepth);
       }
@@ -591,9 +594,8 @@ export function ScenarioBuilderApp() {
 
   const fieldOptions = useMemo(() => {
     const options: Array<{ path: string; label: string }> = [];
-    const humanize = (key: string) => key.replace(/([A-Z])/g, " $1").replace(/^./, (char) => char.toUpperCase());
 
-    Object.keys(scenario.courseInfo).forEach((key) => options.push({ path: `courseInfo.${key}`, label: `Course Info · ${humanize(key)}` }));
+    Object.keys(scenario.courseInfo).forEach((key) => options.push({ path: `courseInfo.${key}`, label: `Course Info · ${formatFieldLabel(key)}` }));
     options.push({ path: "objectives", label: "Learning Objectives (list)" });
     options.push({ path: "clinicalSetting.settingRequired", label: "Clinical Setting · Setting required" });
     options.push({ path: "clinicalSetting.remarks", label: "Clinical Setting · Remarks" });
@@ -601,10 +603,10 @@ export function ScenarioBuilderApp() {
     options.push({ path: "confederates", label: "Confederates (list)" });
     options.push({ path: "traineeRoles", label: "Trainee Roles (list)" });
     Object.keys(scenario.patientInfo).forEach((key) =>
-      options.push({ path: `patientInfo.${key}`, label: `Patient Info · ${humanize(key)}` }),
+      options.push({ path: `patientInfo.${key}`, label: `Patient Info · ${formatFieldLabel(key)}` }),
     );
     Object.keys(scenario.scenarioInfo).forEach((key) =>
-      options.push({ path: `scenarioInfo.${key}`, label: `Scenario Info · ${humanize(key)}` }),
+      options.push({ path: `scenarioInfo.${key}`, label: `Scenario Info · ${formatFieldLabel(key)}` }),
     );
     scenario.scenarioFlow.forEach((_, index) => {
       options.push({ path: `scenarioFlow.${index}.stateName`, label: `Scenario Flow S${index + 1} · State name` });
@@ -635,13 +637,13 @@ export function ScenarioBuilderApp() {
       options.push({ path: `equipment.${index}.remarks`, label: `Equipment Row ${index + 1} · Remarks` });
     });
     Object.keys(scenario.debriefInfo).forEach((key) =>
-      options.push({ path: `debriefInfo.${key}`, label: `Debrief Info · ${humanize(key)}` }),
+      options.push({ path: `debriefInfo.${key}`, label: `Debrief Info · ${formatFieldLabel(key)}` }),
     );
     options.push({ path: "simulatorPrep", label: "Simulator Prep (list)" });
     options.push({ path: "monitorSetup.layout", label: "Monitor Setup · Layout options" });
     options.push({ path: "monitorSetup.parameters", label: "Monitor Setup · Parameter options" });
     Object.keys(scenario.documentInfo).forEach((key) =>
-      options.push({ path: `documentInfo.${key}`, label: `Document Info · ${humanize(key)}` }),
+      options.push({ path: `documentInfo.${key}`, label: `Document Info · ${formatFieldLabel(key)}` }),
     );
     options.push({ path: "appendixImages", label: "Simulation Images (appendix list)" });
     scenario.appendixImages.forEach((_, index) => {
@@ -2144,14 +2146,14 @@ export function ScenarioBuilderApp() {
                       <input
                         type="range"
                         min={0}
-                        max={2}
+                        max={4}
                         step={1}
                         value={thinkingDepth}
                         onChange={(event) => setThinkingDepth(Number(event.target.value) as ThinkingDepth)}
                         className="mt-1 w-full"
                       />
                       <span className="mt-1 block normal-case text-[11px] text-slate-500">
-                        0 = instant, 1 = low reasoning, 2 = medium reasoning
+                        0 = none, 1 = minimum, 2 = medium, 3 = high, 4 = maximum reasoning
                       </span>
                     </label>
 
@@ -2470,7 +2472,7 @@ function RecordEditor({ sectionKey, record, isFieldLocked, onFieldFocus, onChang
   return (
     <div className="grid gap-3 md:grid-cols-2">
       {Object.entries(editableRecord).map(([key, value]) => {
-        const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
+        const label = formatFieldLabel(key);
         const fieldPath = `${sectionKey}.${key}`;
         const locked = isFieldLocked(fieldPath);
         const isDocumentDateField =

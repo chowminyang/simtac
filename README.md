@@ -77,7 +77,7 @@ Passcode can be supplied via header `x-admin-passcode`.
 1. Import this project in Vercel.
 2. Set environment variables:
 - `OPENAI_API_KEY`
-- `OPENAI_MODEL` (optional, default `gpt-5.2`)
+- `OPENAI_MODEL` (optional, default `gpt-5.4-mini`)
 - `OPENAI_VECTOR_STORE_ID`
 - `OPENAI_IMAGE_MODEL` (optional, default `gpt-image-1.5`)
 - `KNOWLEDGE_ADMIN_PASSCODE`
