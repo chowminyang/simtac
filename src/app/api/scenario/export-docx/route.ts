@@ -19,7 +19,9 @@ export async function POST(request: Request) {
       return jsonError(parsed.error.issues.map((issue) => issue.message).join("; "), 400);
     }
 
-    const fileBuffer = await buildScenarioDocx(parsed.data.scenario);
+    const fileBuffer = await buildScenarioDocx(parsed.data.scenario, {
+      scenarioFlowColumns: parsed.data.scenarioFlowColumns,
+    });
     const fileName = buildExportFileName(parsed.data.scenario);
 
     return new NextResponse(new Uint8Array(fileBuffer), {

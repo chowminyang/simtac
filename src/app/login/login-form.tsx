@@ -56,7 +56,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
           height={308}
           className="h-24 w-auto object-contain sm:h-28"
           unoptimized
-          priority
+          loading="eager"
         />
       </div>
       <h1 className="text-xl font-semibold text-slate-900">SIMTAC Access</h1>

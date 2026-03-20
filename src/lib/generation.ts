@@ -185,6 +185,17 @@ function preserveAppendixImages(base: ScenarioDocument, source: ScenarioDocument
   };
 }
 
+function buildTextConfig(model: string, format: ReturnType<typeof zodTextFormat>) {
+  return model === "gpt-5.4-mini"
+    ? {
+        format,
+        verbosity: "low" as const,
+      }
+    : {
+        format,
+      };
+}
+
 export async function generateScenario(request: ScenarioGenerateRequest): Promise<GenerationResponsePayload> {
   assertPromptBounds(request.prompt);
   assertScenarioBounds(request.scenario);
@@ -216,9 +227,7 @@ export async function generateScenario(request: ScenarioGenerateRequest): Promis
     max_output_tokens: 8000,
     include: ["file_search_call.results"],
     tools: buildRetrievalTool(),
-    text: {
-      format: zodTextFormat(generationResponsePayloadSchema, "scenario_generation"),
-    },
+    text: buildTextConfig(model, zodTextFormat(generationResponsePayloadSchema, "scenario_generation")),
     input: [
       {
         role: "system",
@@ -273,9 +282,7 @@ export async function fillScenarioSection(
     max_output_tokens: 7000,
     include: ["file_search_call.results"],
     tools: buildRetrievalTool(),
-    text: {
-      format: zodTextFormat(scenarioDocumentSchema, "scenario_document"),
-    },
+    text: buildTextConfig(model, zodTextFormat(scenarioDocumentSchema, "scenario_document")),
     input: [
       {
         role: "system",

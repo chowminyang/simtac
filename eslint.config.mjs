@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // Generated local artifacts:
     "coverage/**",
     "output/**",
+    ".vercel/**",
     ".playwright-cli/**",
   ]),
 ]);

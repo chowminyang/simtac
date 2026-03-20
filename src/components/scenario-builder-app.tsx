@@ -75,6 +75,35 @@ const EMPTY_STATE_ROW: ScenarioStateRow = {
   transitionRule: "next",
 };
 
+const SCENARIO_FLOW_EXPORT_COLUMNS = [
+  { key: "stateName", label: "State" },
+  { key: "vitalSigns", label: "Vital Signs" },
+  { key: "physicalExamDisplayedOnSimMan", label: "Physical Exam (Displayed on SimMan)" },
+  { key: "physicalExamVolunteeredByInstructor", label: "Physical Exam (Volunteered by Instructor)" },
+  { key: "investigations", label: "Investigations" },
+  { key: "expectedActions", label: "Expected Actions" },
+  { key: "remarks", label: "Remarks" },
+  { key: "instructorControl", label: "Instructor Control" },
+  { key: "transitionRule", label: "Transition: next / auto / handler" },
+] as const;
+
+type ScenarioFlowExportColumnKey = (typeof SCENARIO_FLOW_EXPORT_COLUMNS)[number]["key"];
+
+const DEFAULT_SCENARIO_FLOW_EXPORT_COLUMNS: ScenarioFlowExportColumnKey[] = SCENARIO_FLOW_EXPORT_COLUMNS.map(
+  (column) => column.key,
+);
+
+function normalizeIdentificationNo(value: string): string {
+  const compact = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 9);
+  if (!compact) return "";
+
+  const prefix = compact.slice(0, 1).replace(/[^A-Z]/g, "");
+  const digits = compact.slice(1, 8).replace(/\D/g, "");
+  const suffix = compact.slice(8, 9).replace(/[^A-Z]/g, "");
+
+  return `${prefix}${digits}${suffix}`;
+}
+
 function buildSectionLockState(defaultValue = false): Record<SectionKey, boolean> {
   return SECTION_LIST.reduce(
     (acc, section) => {
@@ -239,6 +268,107 @@ function reindexScenarioFlowStateLocksAfterRemove(
   return next;
 }
 
+function reindexScenarioFlowFieldLocksAfterRemove(
+  current: Record<string, boolean>,
+  removedIndex: number,
+): Record<string, boolean> {
+  const next: Record<string, boolean> = {};
+
+  for (const [path, locked] of Object.entries(current)) {
+    if (!locked) continue;
+
+    const match = path.match(/^scenarioFlow\.(\d+)(.*)$/);
+    if (!match) {
+      next[path] = true;
+      continue;
+    }
+
+    const index = Number.parseInt(match[1], 10);
+    if (!Number.isFinite(index) || index < 0) continue;
+    if (index === removedIndex) continue;
+
+    const adjustedIndex = index > removedIndex ? index - 1 : index;
+    next[`scenarioFlow.${adjustedIndex}${match[2]}`] = true;
+  }
+
+  return next;
+}
+
+function reindexSelectedFieldPathAfterScenarioFlowRemove(path: string, removedIndex: number): string {
+  if (!path) return path;
+
+  const match = path.match(/^scenarioFlow\.(\d+)(.*)$/);
+  if (!match) return path;
+
+  const index = Number.parseInt(match[1], 10);
+  if (!Number.isFinite(index) || index < 0) return path;
+  if (index === removedIndex) return "";
+
+  const adjustedIndex = index > removedIndex ? index - 1 : index;
+  return `scenarioFlow.${adjustedIndex}${match[2]}`;
+}
+
+function remapScenarioFlowIndexForMove(index: number, fromIndex: number, toIndex: number): number {
+  if (index === fromIndex) return toIndex;
+  if (fromIndex < toIndex && index > fromIndex && index <= toIndex) return index - 1;
+  if (fromIndex > toIndex && index >= toIndex && index < fromIndex) return index + 1;
+  return index;
+}
+
+function reindexScenarioFlowStateLocksAfterMove(
+  current: Record<number, boolean>,
+  fromIndex: number,
+  toIndex: number,
+): Record<number, boolean> {
+  const next: Record<number, boolean> = {};
+
+  for (const [key, locked] of Object.entries(current)) {
+    if (!locked) continue;
+    const index = Number.parseInt(key, 10);
+    if (!Number.isFinite(index) || index < 0) continue;
+    next[remapScenarioFlowIndexForMove(index, fromIndex, toIndex)] = true;
+  }
+
+  return next;
+}
+
+function reindexScenarioFlowFieldLocksAfterMove(
+  current: Record<string, boolean>,
+  fromIndex: number,
+  toIndex: number,
+): Record<string, boolean> {
+  const next: Record<string, boolean> = {};
+
+  for (const [path, locked] of Object.entries(current)) {
+    if (!locked) continue;
+
+    const match = path.match(/^scenarioFlow\.(\d+)(.*)$/);
+    if (!match) {
+      next[path] = true;
+      continue;
+    }
+
+    const index = Number.parseInt(match[1], 10);
+    if (!Number.isFinite(index) || index < 0) continue;
+    const adjustedIndex = remapScenarioFlowIndexForMove(index, fromIndex, toIndex);
+    next[`scenarioFlow.${adjustedIndex}${match[2]}`] = true;
+  }
+
+  return next;
+}
+
+function reindexSelectedFieldPathAfterScenarioFlowMove(path: string, fromIndex: number, toIndex: number): string {
+  if (!path) return path;
+
+  const match = path.match(/^scenarioFlow\.(\d+)(.*)$/);
+  if (!match) return path;
+
+  const index = Number.parseInt(match[1], 10);
+  if (!Number.isFinite(index) || index < 0) return path;
+
+  return `scenarioFlow.${remapScenarioFlowIndexForMove(index, fromIndex, toIndex)}${match[2]}`;
+}
+
 function arrayFromTextarea(value: string): string[] {
   return value
     .split("\n")
@@ -289,6 +419,10 @@ function normalizeScenario(scenario: ScenarioDocument): ScenarioDocument {
 
   return {
     ...scenario,
+    patientInfo: {
+      ...scenario.patientInfo,
+      identificationNo: normalizeIdentificationNo(scenario.patientInfo.identificationNo || ""),
+    },
     documentInfo: {
       ...scenario.documentInfo,
       dateScenarioDeveloped: normalizeToDmyDate(scenario.documentInfo.dateScenarioDeveloped),
@@ -325,7 +459,7 @@ export function ScenarioBuilderApp() {
   );
   const [lockedScenarioFlowStates, setLockedScenarioFlowStates] = useState<Record<number, boolean>>({});
   const [lockedFields, setLockedFields] = useState<Record<string, boolean>>({});
-  const [selectedFieldPath, setSelectedFieldPath] = useState("");
+  const [, setSelectedFieldPath] = useState("");
   const [imagePrompt, setImagePrompt] = useState("");
   const [imageSize, setImageSize] = useState<"1024x1024" | "1536x1024" | "1024x1536" | "auto">("1536x1024");
   const [imageQuality, setImageQuality] = useState<"low" | "medium" | "high" | "auto">("medium");
@@ -337,6 +471,10 @@ export function ScenarioBuilderApp() {
   const [busySection, setBusySection] = useState<SectionKey | null>(null);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [updateDialogPrompt, setUpdateDialogPrompt] = useState("");
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [selectedScenarioFlowExportColumns, setSelectedScenarioFlowExportColumns] = useState<
+    ScenarioFlowExportColumnKey[]
+  >([...DEFAULT_SCENARIO_FLOW_EXPORT_COLUMNS]);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -380,7 +518,7 @@ export function ScenarioBuilderApp() {
         parsed.thinkingDepth === 3 ||
         parsed.thinkingDepth === 4
       ) {
-        setThinkingDepth(parsed.thinkingDepth as ThinkingDepth);
+        setThinkingDepth((parsed.thinkingDepth >= 2 ? 2 : parsed.thinkingDepth) as ThinkingDepth);
       }
       if (parsed.imagePrompt) setImagePrompt(String(parsed.imagePrompt));
       if (
@@ -417,9 +555,6 @@ export function ScenarioBuilderApp() {
         });
         setLockedScenarioFlowStates(restored);
       }
-      if (parsed.lockedFields && typeof parsed.lockedFields === "object") {
-        setLockedFields(parsed.lockedFields as Record<string, boolean>);
-      }
     } catch {
       // ignore corrupt local storage payload
     }
@@ -443,7 +578,6 @@ export function ScenarioBuilderApp() {
           citations,
           lockedSections,
           lockedScenarioFlowStates,
-          lockedFields,
         }),
       );
     } catch {
@@ -463,7 +597,6 @@ export function ScenarioBuilderApp() {
     citations,
     lockedSections,
     lockedScenarioFlowStates,
-    lockedFields,
   ]);
 
   useEffect(() => {
@@ -529,6 +662,35 @@ export function ScenarioBuilderApp() {
     }));
   }
 
+  function removeScenarioFlowState(index: number) {
+    if (index < 0 || index >= scenario.scenarioFlow.length || scenario.scenarioFlow.length <= 1) return;
+
+    setLockedScenarioFlowStates((current) => reindexScenarioFlowStateLocksAfterRemove(current, index));
+    setLockedFields((current) => reindexScenarioFlowFieldLocksAfterRemove(current, index));
+    setSelectedFieldPath((current) => reindexSelectedFieldPathAfterScenarioFlowRemove(current, index));
+
+    updateScenario((draft) => {
+      if (draft.scenarioFlow.length <= 1) return;
+      draft.scenarioFlow.splice(index, 1);
+    });
+  }
+
+  function moveScenarioFlowState(index: number, direction: -1 | 1) {
+    const nextIndex = index + direction;
+    if (index < 0 || index >= scenario.scenarioFlow.length) return;
+    if (nextIndex < 0 || nextIndex >= scenario.scenarioFlow.length) return;
+
+    setLockedScenarioFlowStates((current) => reindexScenarioFlowStateLocksAfterMove(current, index, nextIndex));
+    setLockedFields((current) => reindexScenarioFlowFieldLocksAfterMove(current, index, nextIndex));
+    setSelectedFieldPath((current) => reindexSelectedFieldPathAfterScenarioFlowMove(current, index, nextIndex));
+
+    updateScenario((draft) => {
+      const [movedRow] = draft.scenarioFlow.splice(index, 1);
+      if (!movedRow) return;
+      draft.scenarioFlow.splice(nextIndex, 0, movedRow);
+    });
+  }
+
   function isScenarioFlowStateLocked(index: number): boolean {
     return Boolean(lockedScenarioFlowStates[index]);
   }
@@ -552,21 +714,6 @@ export function ScenarioBuilderApp() {
     return false;
   }
 
-  function lockField(path: string) {
-    if (!path) return;
-    setLockedFields((current) => ({ ...current, [path]: true }));
-  }
-
-  function unlockField(path: string) {
-    if (!path) return;
-    setLockedFields((current) => {
-      if (!current[path]) return current;
-      const next = { ...current };
-      delete next[path];
-      return next;
-    });
-  }
-
   const lockedSectionCount = useMemo(
     () => SECTION_LIST.reduce((count, section) => count + (lockedSections[section.key] ? 1 : 0), 0),
     [lockedSections],
@@ -574,10 +721,6 @@ export function ScenarioBuilderApp() {
   const lockedScenarioFlowStateCount = useMemo(
     () => Object.values(lockedScenarioFlowStates).reduce((count, locked) => count + (locked ? 1 : 0), 0),
     [lockedScenarioFlowStates],
-  );
-  const lockedFieldCount = useMemo(
-    () => Object.values(lockedFields).reduce((count, locked) => count + (locked ? 1 : 0), 0),
-    [lockedFields],
   );
   const workspaceGridClass = useMemo(() => {
     if (showLeftSidebar && showRightSidebar) {
@@ -591,83 +734,6 @@ export function ScenarioBuilderApp() {
     }
     return "grid gap-4";
   }, [showLeftSidebar, showRightSidebar]);
-
-  const fieldOptions = useMemo(() => {
-    const options: Array<{ path: string; label: string }> = [];
-
-    Object.keys(scenario.courseInfo).forEach((key) => options.push({ path: `courseInfo.${key}`, label: `Course Info · ${formatFieldLabel(key)}` }));
-    options.push({ path: "objectives", label: "Learning Objectives (list)" });
-    options.push({ path: "clinicalSetting.settingRequired", label: "Clinical Setting · Setting required" });
-    options.push({ path: "clinicalSetting.remarks", label: "Clinical Setting · Remarks" });
-    options.push({ path: "instructors", label: "Instructors (list)" });
-    options.push({ path: "confederates", label: "Confederates (list)" });
-    options.push({ path: "traineeRoles", label: "Trainee Roles (list)" });
-    Object.keys(scenario.patientInfo).forEach((key) =>
-      options.push({ path: `patientInfo.${key}`, label: `Patient Info · ${formatFieldLabel(key)}` }),
-    );
-    Object.keys(scenario.scenarioInfo).forEach((key) =>
-      options.push({ path: `scenarioInfo.${key}`, label: `Scenario Info · ${formatFieldLabel(key)}` }),
-    );
-    scenario.scenarioFlow.forEach((_, index) => {
-      options.push({ path: `scenarioFlow.${index}.stateName`, label: `Scenario Flow S${index + 1} · State name` });
-      (["bp", "pr", "rr", "spo2", "rhythm"] as const).forEach((key) =>
-        options.push({
-          path: `scenarioFlow.${index}.vitalSigns.${key}`,
-          label: `Scenario Flow S${index + 1} · Vital ${key.toUpperCase()}`,
-        }),
-      );
-      options.push({
-        path: `scenarioFlow.${index}.physicalExamDisplayedOnSimMan`,
-        label: `Scenario Flow S${index + 1} · Physical exam (Displayed on SimMan)`,
-      });
-      options.push({
-        path: `scenarioFlow.${index}.physicalExamVolunteeredByInstructor`,
-        label: `Scenario Flow S${index + 1} · Physical exam (Volunteered by instructor)`,
-      });
-      options.push({ path: `scenarioFlow.${index}.investigations`, label: `Scenario Flow S${index + 1} · Investigations` });
-      options.push({ path: `scenarioFlow.${index}.expectedActions`, label: `Scenario Flow S${index + 1} · Expected actions` });
-      options.push({ path: `scenarioFlow.${index}.remarks`, label: `Scenario Flow S${index + 1} · Remarks` });
-      options.push({ path: `scenarioFlow.${index}.instructorControl`, label: `Scenario Flow S${index + 1} · Instructor control` });
-      options.push({ path: `scenarioFlow.${index}.transitionRule`, label: `Scenario Flow S${index + 1} · Transition rule` });
-    });
-    scenario.equipment.forEach((_, index) => {
-      options.push({ path: `equipment.${index}.category`, label: `Equipment Row ${index + 1} · Category` });
-      options.push({ path: `equipment.${index}.item`, label: `Equipment Row ${index + 1} · Item` });
-      options.push({ path: `equipment.${index}.quantity`, label: `Equipment Row ${index + 1} · Quantity` });
-      options.push({ path: `equipment.${index}.remarks`, label: `Equipment Row ${index + 1} · Remarks` });
-    });
-    Object.keys(scenario.debriefInfo).forEach((key) =>
-      options.push({ path: `debriefInfo.${key}`, label: `Debrief Info · ${formatFieldLabel(key)}` }),
-    );
-    options.push({ path: "simulatorPrep", label: "Simulator Prep (list)" });
-    options.push({ path: "monitorSetup.layout", label: "Monitor Setup · Layout options" });
-    options.push({ path: "monitorSetup.parameters", label: "Monitor Setup · Parameter options" });
-    Object.keys(scenario.documentInfo).forEach((key) =>
-      options.push({ path: `documentInfo.${key}`, label: `Document Info · ${formatFieldLabel(key)}` }),
-    );
-    options.push({ path: "appendixImages", label: "Simulation Images (appendix list)" });
-    scenario.appendixImages.forEach((_, index) => {
-      options.push({ path: `appendixImages.${index}.caption`, label: `Appendix Image ${index + 1} · Caption` });
-    });
-
-    return options;
-  }, [scenario]);
-
-  const fieldLabelByPath = useMemo(
-    () => new Map(fieldOptions.map((option) => [option.path, option.label] as const)),
-    [fieldOptions],
-  );
-
-  useEffect(() => {
-    if (!fieldOptions.length) {
-      setSelectedFieldPath("");
-      return;
-    }
-
-    if (!fieldOptions.some((option) => option.path === selectedFieldPath)) {
-      setSelectedFieldPath("");
-    }
-  }, [fieldOptions, selectedFieldPath]);
 
   async function callApi<T>(url: string, init: RequestInit): Promise<T> {
     const response = await fetch(url, init);
@@ -856,26 +922,13 @@ export function ScenarioBuilderApp() {
     }
   }
 
-  async function runValidate() {
+  function openExportDialog() {
     setErrorMessage("");
-    setStatusMessage("Validating scenario...");
-
-    try {
-      const result = await callApi<{ warnings: ValidationWarning[] }>("/api/scenario/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenario }),
-      });
-
-      setWarnings(result.warnings || []);
-      setStatusMessage("Validation complete.");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Validation failed.");
-      setStatusMessage("Validation failed.");
-    }
+    setSelectedScenarioFlowExportColumns([...DEFAULT_SCENARIO_FLOW_EXPORT_COLUMNS]);
+    setExportDialogOpen(true);
   }
 
-  async function runExport() {
+  async function runExport(selectedColumns: ScenarioFlowExportColumnKey[]) {
     setErrorMessage("");
     setStatusMessage("Exporting DOCX...");
 
@@ -883,7 +936,7 @@ export function ScenarioBuilderApp() {
       const response = await fetch("/api/scenario/export-docx", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenario }),
+        body: JSON.stringify({ scenario, scenarioFlowColumns: selectedColumns }),
       });
 
       if (!response.ok) {
@@ -904,9 +957,23 @@ export function ScenarioBuilderApp() {
       URL.revokeObjectURL(objectUrl);
 
       setStatusMessage("DOCX exported.");
+      return true;
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Export failed.");
       setStatusMessage("Export failed.");
+      return false;
+    }
+  }
+
+  async function submitExportDialog() {
+    if (selectedScenarioFlowExportColumns.length === 0) {
+      setErrorMessage("Select at least one Scenario Flow column to export.");
+      return;
+    }
+
+    const success = await runExport(selectedScenarioFlowExportColumns);
+    if (success) {
+      setExportDialogOpen(false);
     }
   }
 
@@ -942,7 +1009,6 @@ export function ScenarioBuilderApp() {
       });
 
       setGeneratedImages((current) => [result.image, ...current].slice(0, 8));
-      setImagePrompt(result.image.revisedPrompt || imagePrompt);
       setStatusMessage(modeValue === "new" ? "Image generated." : "Image refined.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Image generation failed.");
@@ -982,11 +1048,8 @@ export function ScenarioBuilderApp() {
     setStatusMessage("Saved appendix image removed.");
   }
 
-  function resetAll() {
-    if (!window.confirm("Reset the entire scenario workspace? This will clear all current edits.")) {
-      return;
-    }
-
+  function applyWorkspaceReset(nextMode: GenerationMode | null, nextStatusMessage = "") {
+    setMode(nextMode);
     setScenario(structuredClone(DEFAULT_SCENARIO));
     setPrompt("");
     setThinkingDepth(1);
@@ -1006,7 +1069,19 @@ export function ScenarioBuilderApp() {
     setUpdateDialogOpen(false);
     setUpdateDialogPrompt("");
     setErrorMessage("");
-    setStatusMessage("Workspace reset.");
+    setStatusMessage(nextStatusMessage);
+  }
+
+  function switchMode(nextMode: GenerationMode) {
+    applyWorkspaceReset(nextMode);
+  }
+
+  function resetAll() {
+    if (!window.confirm("Reset the entire scenario workspace? This will clear all current edits.")) {
+      return;
+    }
+
+    applyWorkspaceReset(mode, "Workspace reset.");
   }
 
   function jumpToSection(section: NavigationSectionKey) {
@@ -1024,7 +1099,13 @@ export function ScenarioBuilderApp() {
               <p className="mt-2 max-w-4xl text-sm text-slate-700">
                 Generate and refine Singapore-context medical simulation scenarios with strict SimMan capability checks and direct DOCX export.
               </p>
-              {statusMessage ? <p className="mt-2 text-xs text-slate-600">{statusMessage}</p> : null}
+              {statusMessage &&
+              !statusMessage.startsWith("Generating medical image") &&
+              !statusMessage.startsWith("Refining medical image") &&
+              !statusMessage.startsWith("Image ") &&
+              !statusMessage.startsWith("Saved appendix image") ? (
+                <p className="mt-2 text-xs text-slate-600">{statusMessage}</p>
+              ) : null}
               {errorMessage ? <p className="mt-1 text-sm text-rose-700">{errorMessage}</p> : null}
             </div>
             <Image
@@ -1034,7 +1115,7 @@ export function ScenarioBuilderApp() {
               height={308}
               className="h-24 w-auto shrink-0 object-contain sm:h-28 md:h-32"
               unoptimized
-              priority
+              loading="eager"
             />
           </div>
         </header>
@@ -1044,7 +1125,7 @@ export function ScenarioBuilderApp() {
             <button
               type="button"
               className="rounded-2xl border border-slate-300 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              onClick={() => setMode("ai_prompt")}
+              onClick={() => switchMode("ai_prompt")}
             >
               <h2 className="text-xl font-semibold">Create with AI</h2>
               <p className="mt-2 text-sm text-slate-700">
@@ -1054,7 +1135,7 @@ export function ScenarioBuilderApp() {
             <button
               type="button"
               className="rounded-2xl border border-slate-300 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              onClick={() => setMode("worksheet_assist")}
+              onClick={() => switchMode("worksheet_assist")}
             >
               <h2 className="text-xl font-semibold">Fill Worksheet</h2>
               <p className="mt-2 text-sm text-slate-700">
@@ -1217,7 +1298,7 @@ export function ScenarioBuilderApp() {
                   loading={busySection === "clinicalSetting"}
                   locked={lockedSections.clinicalSetting}
                 />
-                <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-600">Setting required</label>
+                <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-600">Clinical setting</label>
                 <textarea
                   className={`mb-3 h-16 w-full rounded-md border p-2 text-sm ${
                     isFieldLocked("clinicalSetting.settingRequired")
@@ -1427,6 +1508,26 @@ export function ScenarioBuilderApp() {
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
+                            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 disabled:opacity-40"
+                            disabled={lockedSections.scenarioFlow || rowIndex === 0}
+                            onClick={() => moveScenarioFlowState(rowIndex, -1)}
+                            aria-label={`Move State ${rowIndex + 1} up`}
+                            title="Move up"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 disabled:opacity-40"
+                            disabled={lockedSections.scenarioFlow || rowIndex === scenario.scenarioFlow.length - 1}
+                            onClick={() => moveScenarioFlowState(rowIndex, 1)}
+                            aria-label={`Move State ${rowIndex + 1} down`}
+                            title="Move down"
+                          >
+                            ↓
+                          </button>
+                          <button
+                            type="button"
                             className={`rounded-md border px-2 py-1 text-xs font-medium ${
                               stateLocked
                                 ? "border-amber-400 bg-amber-100 text-amber-900"
@@ -1441,15 +1542,7 @@ export function ScenarioBuilderApp() {
                             type="button"
                             className="rounded-md border border-rose-300 px-2 py-1 text-xs text-rose-700"
                             disabled={scenario.scenarioFlow.length <= 1 || lockedSections.scenarioFlow || stateLocked}
-                            onClick={() => {
-                              setLockedScenarioFlowStates((current) =>
-                                reindexScenarioFlowStateLocksAfterRemove(current, rowIndex),
-                              );
-                              updateScenario((draft) => {
-                                if (draft.scenarioFlow.length <= 1) return;
-                                draft.scenarioFlow.splice(rowIndex, 1);
-                              });
-                            }}
+                            onClick={() => removeScenarioFlowState(rowIndex)}
                           >
                             Remove
                           </button>
@@ -1570,7 +1663,7 @@ export function ScenarioBuilderApp() {
                           }
                         />
                         <label className="text-xs font-medium uppercase tracking-wide text-slate-600">
-                          Transition rule
+                          Transition: next / auto / handler
                           <select
                             className={`mt-1 w-full rounded-md border px-2 py-1 text-sm ${
                               isFieldLocked(`scenarioFlow.${rowIndex}.transitionRule`)
@@ -1913,6 +2006,16 @@ export function ScenarioBuilderApp() {
                 <p className="mt-1 text-sm text-slate-700">
                   Generate Singapore-context medical simulation images for this scenario, refine them iteratively, then save selected images into the DOCX appendix.
                 </p>
+                <p className="mt-1 text-sm text-amber-700">Do not use image generation to create XRs or ECGs.</p>
+                {statusMessage &&
+                (statusMessage.startsWith("Generating medical image") ||
+                  statusMessage.startsWith("Refining medical image") ||
+                  statusMessage.startsWith("Image ") ||
+                  statusMessage.startsWith("Saved appendix image")) ? (
+                  <p className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                    {statusMessage}
+                  </p>
+                ) : null}
 
                 <label className="mt-3 block text-xs font-medium uppercase tracking-wide text-slate-600">
                   Image prompt
@@ -2146,14 +2249,14 @@ export function ScenarioBuilderApp() {
                       <input
                         type="range"
                         min={0}
-                        max={4}
+                        max={2}
                         step={1}
                         value={thinkingDepth}
                         onChange={(event) => setThinkingDepth(Number(event.target.value) as ThinkingDepth)}
                         className="mt-1 w-full"
                       />
                       <span className="mt-1 block normal-case text-[11px] text-slate-500">
-                        0 = none, 1 = minimum, 2 = medium, 3 = high, 4 = maximum reasoning
+                        0 = none, 1 = minimum, 2 = medium
                       </span>
                     </label>
 
@@ -2179,14 +2282,7 @@ export function ScenarioBuilderApp() {
                       <button
                         type="button"
                         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
-                        onClick={runValidate}
-                      >
-                        Validate
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
-                        onClick={runExport}
+                        onClick={openExportDialog}
                       >
                         Export DOCX
                       </button>
@@ -2227,9 +2323,9 @@ export function ScenarioBuilderApp() {
                   <button
                     type="button"
                     className="mt-2 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
-                    onClick={() => setLockedSections(buildSectionLockState(false))}
+                    onClick={() => setLockedSections(buildSectionLockState(lockedSectionCount !== SECTION_LIST.length))}
                   >
-                    Unlock all sections
+                    {lockedSectionCount === SECTION_LIST.length ? "Unlock all sections" : "Lock all sections"}
                   </button>
                 </div>
 
@@ -2259,95 +2355,25 @@ export function ScenarioBuilderApp() {
                   </div>
                   <button
                     type="button"
-                    className="mt-2 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
-                    onClick={() => setLockedScenarioFlowStates({})}
+                    className="mt-2 w-full rounded-md border border-slate-300 px-2 py-1 text-xs disabled:cursor-not-allowed disabled:border-slate-100 disabled:text-slate-300"
+                    disabled={scenario.scenarioFlow.length === 0}
+                    onClick={() =>
+                      setLockedScenarioFlowStates(
+                        lockedScenarioFlowStateCount === scenario.scenarioFlow.length
+                          ? {}
+                          : scenario.scenarioFlow.reduce<Record<number, boolean>>((next, _row, index) => {
+                              next[index] = true;
+                              return next;
+                            }, {}),
+                      )
+                    }
                   >
-                    Unlock all states
+                    {lockedScenarioFlowStateCount === scenario.scenarioFlow.length && scenario.scenarioFlow.length > 0
+                      ? "Unlock all states"
+                      : "Lock all states"}
                   </button>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Field Locks ({lockedFieldCount})</h3>
-                  <p className="mt-2 text-xs text-slate-600">Click any field in the form to select it here.</p>
-                  <div className="mt-2 rounded-md border border-slate-300 bg-slate-50 px-2 py-1 text-xs">
-                    <span className="font-semibold text-slate-700">Selected field: </span>
-                    <span className="text-slate-800">{selectedFieldPath ? fieldLabelByPath.get(selectedFieldPath) || selectedFieldPath : "None"}</span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      className="rounded-md border border-slate-300 px-2 py-1 text-xs"
-                      disabled={!selectedFieldPath}
-                      onClick={() => lockField(selectedFieldPath)}
-                    >
-                      Lock selected
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-md border border-slate-300 px-2 py-1 text-xs"
-                      disabled={!selectedFieldPath}
-                      onClick={() => unlockField(selectedFieldPath)}
-                    >
-                      Unlock selected
-                    </button>
-                  </div>
-                  <div className="mt-2 max-h-28 space-y-1 overflow-y-auto rounded-md border border-slate-200 p-2">
-                    {Object.keys(lockedFields).length === 0 ? (
-                      <p className="text-xs text-slate-600">No locked fields.</p>
-                    ) : (
-                      Object.keys(lockedFields).map((path) => (
-                        <div key={path} className="flex items-center justify-between gap-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-900">
-                          <span className="truncate">{fieldLabelByPath.get(path) || path}</span>
-                          <button type="button" className="rounded border border-amber-300 px-1.5 py-0.5" onClick={() => unlockField(path)}>
-                            Unlock
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="mt-2 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
-                    onClick={() => setLockedFields({})}
-                  >
-                    Clear all field locks
-                  </button>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Validation Warnings</h3>
-                  <div className="mt-2 max-h-56 space-y-2 overflow-y-auto">
-                    {warnings.length === 0 ? (
-                      <p className="text-xs text-slate-600">No validation warnings.</p>
-                    ) : (
-                      warnings.map((warning, index) => (
-                        <div key={`${warning.code}-${index}`} className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs">
-                          <p className="font-semibold text-amber-900">{warning.code}</p>
-                          <p className="mt-1 text-amber-800">{warning.message}</p>
-                          {warning.suggestedAlternatives?.length ? (
-                            <p className="mt-1 text-amber-700">Try: {warning.suggestedAlternatives.join(", ")}</p>
-                          ) : null}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Source Grounding</h3>
-                  <div className="mt-2 max-h-48 space-y-2 overflow-y-auto">
-                    {citations.length === 0 ? (
-                      <p className="text-xs text-slate-600">No citations captured yet.</p>
-                    ) : (
-                      citations.map((citation, index) => (
-                        <div key={`${citation.source}-${index}`} className="rounded-md border border-slate-300 bg-slate-50 p-2 text-xs">
-                          <p className="font-semibold text-slate-800">{citation.source}</p>
-                          {citation.excerpt ? <p className="mt-1 text-slate-700">{citation.excerpt}</p> : null}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
               </aside>
             ) : null}
           </div>
@@ -2390,6 +2416,68 @@ export function ScenarioBuilderApp() {
                 unoptimized
                 className="mx-auto h-auto max-h-[72vh] w-full rounded-md object-contain"
               />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {exportDialogOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+          <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <h2 className="text-lg font-semibold">Export DOCX</h2>
+            <p className="mt-2 text-sm text-slate-700">
+              Choose which columns from <span className="font-medium">9. Scenario Flow</span> should be included in the exported DOCX table.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                onClick={() => setSelectedScenarioFlowExportColumns([...DEFAULT_SCENARIO_FLOW_EXPORT_COLUMNS])}
+              >
+                Select all
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                onClick={() => setSelectedScenarioFlowExportColumns([])}
+              >
+                Unselect all
+              </button>
+            </div>
+            <div className="mt-4 grid gap-2 rounded-xl border border-slate-200 p-3">
+              {SCENARIO_FLOW_EXPORT_COLUMNS.map((column) => (
+                <label key={column.key} className="flex items-center gap-2 text-sm text-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={selectedScenarioFlowExportColumns.includes(column.key)}
+                    onChange={() =>
+                      setSelectedScenarioFlowExportColumns((current) =>
+                        current.includes(column.key)
+                          ? current.filter((key) => key !== column.key)
+                          : [...current, column.key],
+                      )
+                    }
+                  />
+                  {column.label}
+                </label>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                onClick={() => setExportDialogOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                onClick={submitExportDialog}
+                disabled={selectedScenarioFlowExportColumns.length === 0}
+              >
+                Export DOCX
+              </button>
             </div>
           </div>
         </div>
@@ -2477,6 +2565,7 @@ function RecordEditor({ sectionKey, record, isFieldLocked, onFieldFocus, onChang
         const locked = isFieldLocked(fieldPath);
         const isDocumentDateField =
           sectionKey === "documentInfo" && (key === "dateScenarioDeveloped" || key === "dateScenarioUpdated");
+        const isIdentificationField = sectionKey === "patientInfo" && key === "identificationNo";
 
         if (typeof value === "boolean") {
           return (
@@ -2497,6 +2586,29 @@ function RecordEditor({ sectionKey, record, isFieldLocked, onFieldFocus, onChang
                 {label}
               </label>
             </div>
+          );
+        }
+
+        if (isIdentificationField) {
+          return (
+            <label key={key} className="text-xs font-medium uppercase tracking-wide text-slate-600">
+              {label}
+              <input
+                type="text"
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm uppercase ${
+                  locked ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100" : "border-slate-300"
+                }`}
+                value={normalizeIdentificationNo(String(value))}
+                disabled={locked}
+                maxLength={9}
+                autoCapitalize="characters"
+                spellCheck={false}
+                onFocus={() => onFieldFocus(fieldPath)}
+                onChange={(event) => onChange(key, normalizeIdentificationNo(event.target.value))}
+                placeholder="S1234567D"
+                title="Format: S1234567D"
+              />
+            </label>
           );
         }
 

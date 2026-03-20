@@ -14,11 +14,10 @@ export default function HelpPage() {
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
             <li>Log in with the site password.</li>
             <li>Choose `Create with AI` or `Fill Worksheet`.</li>
-            <li>Set `Thinking depth` (`0` to `4`) in the right panel.</li>
+            <li>Set `Thinking depth` (`0` to `2`) in the right panel.</li>
             <li>Generate or fill content, then edit directly in the worksheet.</li>
-            <li>Lock anything you want to preserve before re-running AI.</li>
-            <li>Run `Validate` and review warnings.</li>
-            <li>Click `Export DOCX` for a Word file you can continue editing.</li>
+            <li>Use section locks or scenario-flow state locks to preserve content before re-running AI.</li>
+            <li>Click `Export DOCX`, choose the Scenario Flow columns you want, then download the Word file.</li>
           </ol>
           <p className="mt-3 text-sm text-slate-700">
             Note: date fields such as `Date Scenario Developed` and `Date Scenario Updated` use `DD/MM/YYYY`.
@@ -30,7 +29,7 @@ export default function HelpPage() {
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
             <li>Left panel: navigation across Sections `1` to `15`, plus this `Getting Started / How To Use` page.</li>
             <li>Center panel: the editable SIMTAC worksheet with dynamic rows.</li>
-            <li>Right panel: AI controls, section locks, field locks, state locks, warnings, and source grounding.</li>
+            <li>Right panel: AI controls, section locks, and scenario-flow state locks.</li>
             <li>Use `Hide/Show Left Sidebar` and `Hide/Show Right Sidebar` in the workspace to maximize center editing space.</li>
           </ul>
         </section>
@@ -69,10 +68,9 @@ export default function HelpPage() {
           <h2 className="text-lg font-semibold">6. Locks and Safe Regeneration</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
             <li>Section locks are controlled from the right `Section Locks` panel.</li>
-            <li>Field lock: click any field, then use `Lock selected` in `Field Locks`.</li>
-            <li>Scenario flow states can be locked individually using `Lock state` on each state card.</li>
-            <li>Locked fields and locked states are shaded for quick visual confirmation.</li>
-            <li>All locks are respected during `Generate`, `Fill`, and `Update Unlocked with AI` operations.</li>
+            <li>Scenario-flow states can be locked individually using `Lock state` on each state card.</li>
+            <li>Locked sections and locked states are clearly shown for quick visual confirmation.</li>
+            <li>These locks are respected during `Generate`, `Fill`, and `Update Unlocked with AI` operations.</li>
             <li>`Update Unlocked with AI` opens a popup for extra instructions before running.</li>
           </ul>
         </section>
@@ -81,11 +79,12 @@ export default function HelpPage() {
           <h2 className="text-lg font-semibold">7. Scenario Flow and Clinical Logic</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
             <li>Use `+ Add state` / `Remove` to build scenario progression.</li>
+            <li>Use the up/down arrows on each state card to reorder the scenario flow.</li>
             <li>Each state includes vital signs, investigations, expected actions, remarks, instructor control, and transition rule.</li>
             <li>Scenario Flow long-text fields wrap and auto-expand so full content remains visible while editing.</li>
             <li>`Physical exam (Displayed on SimMan only)` is for simulator-rendered findings aligned to SimMan capabilities.</li>
             <li>`Physical exam (Volunteered by instructor)` is for findings/history provided verbally by facilitator or confederates.</li>
-            <li>This split is used in both validation and DOCX export.</li>
+            <li>This split is preserved in the DOCX export.</li>
           </ul>
         </section>
 
@@ -96,19 +95,16 @@ export default function HelpPage() {
             <li>`0`: instant drafting.</li>
             <li>`1`: minimum reasoning.</li>
             <li>`2`: medium reasoning.</li>
-            <li>`3`: high reasoning.</li>
-            <li>`4`: maximum reasoning effort.</li>
             <li>Model selection is fixed by app configuration and not editable in the UI.</li>
           </ul>
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">9. Validation and Safety Guardrails</h2>
+          <h2 className="text-lg font-semibold">9. Scenario Flow Export Options</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
-            <li>Use `Validate` to run SimMan compatibility checks.</li>
-            <li>Warnings cover unsupported monitor parameters, sound tags, and capability tags.</li>
-            <li>If unsupported features are requested, warnings include suggested alternatives.</li>
-            <li>`Source Grounding` shows citations from reference materials used during generation.</li>
+            <li>When you click `Export DOCX`, a popup lets you choose which Scenario Flow columns to include.</li>
+            <li>Use `Select all` or `Unselect all` for faster export setup.</li>
+            <li>Section `9. Scenario Flow` and Section `10. Equipment` export in landscape for better table readability.</li>
           </ul>
         </section>
 
@@ -117,6 +113,7 @@ export default function HelpPage() {
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
             <li>Enter a prompt, choose `Size` and `Quality`, then click `Generate New Image`.</li>
             <li>Use `Refine Latest Image` or `Refine This` to iterate from current outputs.</li>
+            <li>Do not use image generation for XRs or ECGs.</li>
             <li>Click `Save to Scenario` to attach selected images to this scenario.</li>
             <li>Edit captions and click `Save Caption` to commit each caption.</li>
             <li>`Discard Edit` reverts unsaved caption changes.</li>
@@ -129,7 +126,9 @@ export default function HelpPage() {
           <h2 className="text-lg font-semibold">11. Export and Output</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
             <li>`Export DOCX` creates an editable Word file.</li>
+            <li>You can choose which Scenario Flow columns to include before download.</li>
             <li>Scenario Flow and Equipment tables automatically expand/shrink to current row counts.</li>
+            <li>Scenario Flow table entries export with proper paragraph breaks inside table cells.</li>
             <li>Generated images are included in an appendix section.</li>
           </ul>
         </section>
@@ -150,7 +149,6 @@ export default function HelpPage() {
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
             <li>If output is too generic, add explicit constraints and rerun `Update Unlocked with AI`.</li>
             <li>If any content must remain unchanged, lock that section, state, or field first.</li>
-            <li>If warnings persist, use alternatives shown in warning cards and validate again.</li>
             <li>If you need non-Singapore context for a specific case, state it explicitly in your prompt.</li>
             <li>If login fails, verify the deployment password configuration.</li>
           </ul>

@@ -226,12 +226,23 @@ export const scenarioFillSectionRequestSchema = z.object({
   config: generationConfigSchema,
 });
 
-export const scenarioValidateRequestSchema = z.object({
-  scenario: scenarioDocumentSchema,
-});
-
 export const scenarioExportRequestSchema = z.object({
   scenario: scenarioDocumentSchema,
+  scenarioFlowColumns: z
+    .array(
+      z.enum([
+        "stateName",
+        "vitalSigns",
+        "physicalExamDisplayedOnSimMan",
+        "physicalExamVolunteeredByInstructor",
+        "investigations",
+        "expectedActions",
+        "remarks",
+        "instructorControl",
+        "transitionRule",
+      ]),
+    )
+    .optional(),
 });
 
 export type ScenarioDocumentSchema = z.infer<typeof scenarioDocumentSchema>;

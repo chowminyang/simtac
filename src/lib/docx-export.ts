@@ -34,6 +34,29 @@ type AppendixImageDraft = {
   parsedImage: { bytes: Buffer; imageType: "png" | "jpg" | "gif" | "bmp" } | null;
 };
 
+type ScenarioFlowExportColumnKey =
+  | "stateName"
+  | "vitalSigns"
+  | "physicalExamDisplayedOnSimMan"
+  | "physicalExamVolunteeredByInstructor"
+  | "investigations"
+  | "expectedActions"
+  | "remarks"
+  | "instructorControl"
+  | "transitionRule";
+
+const SCENARIO_FLOW_EXPORT_COLUMNS: Array<{ key: ScenarioFlowExportColumnKey; label: string }> = [
+  { key: "stateName", label: "State" },
+  { key: "vitalSigns", label: "Vital Signs" },
+  { key: "physicalExamDisplayedOnSimMan", label: "Physical Exam (Displayed on SimMan)" },
+  { key: "physicalExamVolunteeredByInstructor", label: "Physical Exam (Volunteered by Instructor)" },
+  { key: "investigations", label: "Investigations" },
+  { key: "expectedActions", label: "Expected Actions" },
+  { key: "remarks", label: "Remarks" },
+  { key: "instructorControl", label: "Instructor Control" },
+  { key: "transitionRule", label: "Transition: next / auto / handler" },
+];
+
 function heading(text: string): Paragraph {
   return new Paragraph({
     heading: HeadingLevel.HEADING_2,
@@ -68,20 +91,33 @@ function stringList(items: string[]): Paragraph[] {
   );
 }
 
-function stateFlowTable(scenario: ScenarioDocument): Table {
+function tableCellParagraphs(items: string[]): Paragraph[] {
+  const normalized = items.map((item) => item.trim()).filter(Boolean);
+  if (!normalized.length) {
+    return [new Paragraph("")];
+  }
+
+  return normalized.map(
+    (item, index) =>
+      new Paragraph({
+        text: item,
+        spacing: { after: index === normalized.length - 1 ? 0 : 70 },
+      }),
+  );
+}
+
+function stateFlowTable(
+  scenario: ScenarioDocument,
+  selectedColumns?: ScenarioFlowExportColumnKey[],
+): Table {
+  const activeColumns =
+    selectedColumns && selectedColumns.length > 0
+      ? SCENARIO_FLOW_EXPORT_COLUMNS.filter((column) => selectedColumns.includes(column.key))
+      : SCENARIO_FLOW_EXPORT_COLUMNS;
+
   const header = new TableRow({
     tableHeader: true,
-    children: [
-      "State",
-      "Vital Signs",
-      "Physical Exam (Displayed on SimMan)",
-      "Physical Exam (Volunteered by Instructor)",
-      "Investigations",
-      "Expected Actions",
-      "Remarks",
-      "Instructor Control",
-      "Transition",
-    ].map(
+    children: activeColumns.map((column) => column.label).map(
       (text) =>
         new TableCell({
           children: [new Paragraph({ children: [new TextRun({ text, bold: true })] })],
@@ -89,31 +125,43 @@ function stateFlowTable(scenario: ScenarioDocument): Table {
     ),
   });
 
-  const listToCellText = (items: string[]) => items.map((item) => item.trim()).filter(Boolean).join("\n");
-
   const rows = scenario.scenarioFlow.map((row) => {
     const vitalSigns = Object.entries(row.vitalSigns || {})
       .filter(([, value]) => value && String(value).trim().length > 0)
-      .map(([key, value]) => `${key.toUpperCase()}: ${value}`)
-      .join("\n");
+      .map(([key, value]) => `${key.toUpperCase()}: ${value}`);
 
     return new TableRow({
-      children: [
-        row.stateName || "",
-        vitalSigns,
-        listToCellText(row.physicalExamDisplayedOnSimMan),
-        listToCellText(row.physicalExamVolunteeredByInstructor),
-        listToCellText(row.investigations),
-        listToCellText(row.expectedActions),
-        listToCellText(row.remarks),
-        listToCellText(row.instructorControl),
-        row.transitionRule || "",
-      ].map(
+      children: activeColumns
+        .map((column) => {
+          switch (column.key) {
+            case "stateName":
+              return row.stateName ? [row.stateName] : [];
+            case "vitalSigns":
+              return vitalSigns;
+            case "physicalExamDisplayedOnSimMan":
+              return row.physicalExamDisplayedOnSimMan;
+            case "physicalExamVolunteeredByInstructor":
+              return row.physicalExamVolunteeredByInstructor;
+            case "investigations":
+              return row.investigations;
+            case "expectedActions":
+              return row.expectedActions;
+            case "remarks":
+              return row.remarks;
+            case "instructorControl":
+              return row.instructorControl;
+            case "transitionRule":
+              return row.transitionRule ? [row.transitionRule] : [];
+            default:
+              return [];
+          }
+        })
+        .map(
         (value) =>
           new TableCell({
-            children: [new Paragraph(value || "")],
+            children: tableCellParagraphs(value),
           }),
-      ),
+        ),
     });
   });
 
@@ -196,7 +244,10 @@ function sizeToDimensions(size: string): { width: number; height: number } {
   return { width, height };
 }
 
-export async function buildScenarioDocx(scenario: ScenarioDocument): Promise<Buffer> {
+export async function buildScenarioDocx(
+  scenario: ScenarioDocument,
+  options?: { scenarioFlowColumns?: ScenarioFlowExportColumnKey[] },
+): Promise<Buffer> {
   const portraitBlocks: Array<Paragraph | Table> = [];
   const landscapeBlocks: Array<Paragraph | Table> = [];
   const closingBlocks: Array<Paragraph | Table> = [];
@@ -245,7 +296,7 @@ export async function buildScenarioDocx(scenario: ScenarioDocument): Promise<Buf
   });
 
   addLandscape(heading("9. Scenario Flow"));
-  addLandscape(stateFlowTable(scenario));
+  addLandscape(stateFlowTable(scenario, options?.scenarioFlowColumns));
 
   addLandscape(heading("10. Equipment"));
   addLandscape(equipmentTable(scenario));

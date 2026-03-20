@@ -1,12 +1,11 @@
 import type { GenerationConfig } from "./types";
 
-export type ReasoningEffort = "none" | "low" | "medium" | "high";
+export type ReasoningEffort = "none" | "low" | "medium";
 
 export function mapThinkingToReasoningEffort(config: GenerationConfig): ReasoningEffort {
   if (config.thinkingDepth <= 0) return "none";
   if (config.thinkingDepth === 1) return "low";
-  if (config.thinkingDepth === 2) return "medium";
-  return "high";
+  return "medium";
 }
 
 export function resolveModel(): string {
