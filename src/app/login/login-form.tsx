@@ -50,7 +50,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
     <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex justify-center">
         <Image
-          src="/ttsh-logo.jpg"
+          src="/images/ttsh-logo.jpg"
           alt="Tan Tock Seng Hospital logo"
           width={496}
           height={308}

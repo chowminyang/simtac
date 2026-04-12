@@ -1109,7 +1109,7 @@ export function ScenarioBuilderApp() {
               {errorMessage ? <p className="mt-1 text-sm text-rose-700">{errorMessage}</p> : null}
             </div>
             <Image
-              src="/ttsh-logo.jpg"
+              src="/images/ttsh-logo.jpg"
               alt="Tan Tock Seng Hospital logo"
               width={496}
               height={308}
