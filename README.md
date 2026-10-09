@@ -31,7 +31,7 @@ cp .env.example .env.local
 3. Set required env values in `.env.local`:
 - `OPENAI_API_KEY`
 - `OPENAI_VECTOR_STORE_ID` (after bootstrap, or set later)
-- `OPENAI_IMAGE_MODEL` (optional, default `gpt-image-1.5`)
+- `OPENAI_IMAGE_MODEL` (optional, default `gpt-image-2.5-flare`)
 - `KNOWLEDGE_ADMIN_PASSCODE`
 - `SITE_ACCESS_PASSWORD` (set to `humeaine` unless you want a different site password)
 
@@ -77,9 +77,9 @@ Passcode can be supplied via header `x-admin-passcode`.
 1. Import this project in Vercel.
 2. Set environment variables:
 - `OPENAI_API_KEY`
-- `OPENAI_MODEL` (optional, default `gpt-5.4-mini`)
+- `OPENAI_MODEL` (optional, default `gpt-6-luna`)
 - `OPENAI_VECTOR_STORE_ID`
-- `OPENAI_IMAGE_MODEL` (optional, default `gpt-image-1.5`)
+- `OPENAI_IMAGE_MODEL` (optional, default `gpt-image-2.5-flare`)
 - `KNOWLEDGE_ADMIN_PASSCODE`
 - `SITE_ACCESS_PASSWORD`
 3. Deploy.
@@ -88,3 +88,11 @@ Passcode can be supplied via header `x-admin-passcode`.
 - The app uses no database.
 - Scenario state is saved in browser localStorage.
 - Knowledge persistence is handled in OpenAI vector store.
+
+## Workspace and model updates
+
+The editor focuses on one of 15 sections with a full worksheet view available. Desktop navigation becomes a section menu on phones. Drafts save after hydration, include protection settings, and report storage failures. Download/import backup provides an independent recovery copy. Changing creation mode keeps the draft; Reset All requires confirmation.
+
+Text generation defaults to GPT-6 Luna, with Quick/Balanced/Thorough mapped to none/low/medium reasoning. GPT-6.1 Sol or GPT-6 Astra overrides use low as their minimum supported effort. Existing server environment overrides remain supported. Section fill requests only the selected section, strips appendix image bytes from text context, preserves existing values, and rejects incomplete provider responses. Image generation defaults to GPT Image 2.5 Flare; medium quality remains the default.
+
+Model availability and prices were checked against [OpenAI models](https://developers.openai.com/api/docs/models) and [pricing](https://developers.openai.com/api/docs/pricing). Synthetic provider checks verify API compatibility and preservation, not clinical equivalence. Review generated clinical content before teaching.

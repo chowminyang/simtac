@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     }
 
     const client = getOpenAIClient();
-    const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1.5";
+    const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-flare";
     const size = parsed.data.size || "1536x1024";
     const quality = parsed.data.quality || "medium";
 

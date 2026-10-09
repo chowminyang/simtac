@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 
 import {
@@ -64,7 +65,7 @@ function assertPromptBounds(prompt: string | undefined): void {
 
 function assertScenarioBounds(scenario: ScenarioDocument | undefined): void {
   if (!scenario) return;
-  const serialized = JSON.stringify(scenario);
+  const serialized = JSON.stringify(textScenarioContext(scenario));
   if (serialized.length > MAX_SCENARIO_JSON_CHARS) {
     throw new Error(
       `Scenario payload exceeds ${MAX_SCENARIO_JSON_CHARS} characters. Remove very large free-text blocks and retry.`,
@@ -185,15 +186,27 @@ function preserveAppendixImages(base: ScenarioDocument, source: ScenarioDocument
   };
 }
 
+export function textScenarioContext(scenario: ScenarioDocument) {
+  // Image bytes are exported locally; they add no useful context to a text request.
+  return { ...scenario, appendixImages: scenario.appendixImages.map((image) => ({
+    id: image.id, prompt: image.prompt, revisedPrompt: image.revisedPrompt, caption: image.caption,
+    mimeType: image.mimeType, model: image.model, size: image.size, createdAt: image.createdAt,
+  })) };
+}
+
 function buildTextConfig(model: string, format: ReturnType<typeof zodTextFormat>) {
-  return model === "gpt-5.4-mini"
-    ? {
-        format,
-        verbosity: "low" as const,
-      }
-    : {
-        format,
-      };
+  return /^(gpt-5|gpt-6)/.test(model) ? { format, verbosity: "low" as const } : { format };
+}
+
+export function requireCompletedOutput<T>(response: { status?: string; output_parsed?: T | null }): T {
+  if (response.status !== "completed" || !response.output_parsed) {
+    throw new Error("AI did not return a complete scenario. Your draft has been kept. Try a smaller request or lower thinking depth.");
+  }
+  return response.output_parsed;
+}
+
+export function sectionOutputSchema(section: ScenarioFillSectionRequest["section"]) {
+  return z.object({ [section]: scenarioDocumentSchema.shape[section] });
 }
 
 export async function generateScenario(request: ScenarioGenerateRequest): Promise<GenerationResponsePayload> {
@@ -202,14 +215,14 @@ export async function generateScenario(request: ScenarioGenerateRequest): Promis
 
   const client = getOpenAIClient();
   const model = resolveModel();
-  const reasoningEffort = mapThinkingToReasoningEffort(request.config);
+  const reasoningEffort = mapThinkingToReasoningEffort(request.config, model);
 
   const worksheetGuidance = request.prompt?.trim() ? `\n\nUser guidance:\n${request.prompt.trim()}` : "";
   const userPrompt =
     request.mode === "ai_prompt"
       ? `Create a complete scenario from this prompt:\n${request.prompt || ""}`
       : `You are completing a partially prepared SIMTAC worksheet JSON.\nCurrent scenario JSON:\n${JSON.stringify(
-          request.scenario || {},
+          request.scenario ? textScenarioContext(request.scenario) : {},
           null,
           2,
         )}\n\nRequirements:
@@ -224,7 +237,7 @@ export async function generateScenario(request: ScenarioGenerateRequest): Promis
   const response = await client.responses.parse({
     model,
     reasoning: { effort: reasoningEffort },
-    max_output_tokens: 8000,
+    max_output_tokens: 12000,
     include: ["file_search_call.results"],
     tools: buildRetrievalTool(),
     text: buildTextConfig(model, zodTextFormat(generationResponsePayloadSchema, "scenario_generation")),
@@ -240,13 +253,7 @@ export async function generateScenario(request: ScenarioGenerateRequest): Promis
     ],
   });
 
-  const parsed = generationResponsePayloadSchema.parse(
-    response.output_parsed || {
-      scenario: {},
-      warnings: [],
-      citations: [],
-    },
-  );
+  const parsed = generationResponsePayloadSchema.parse(requireCompletedOutput(response));
 
   const generatedScenario = normalizeScenarioForSimMan(scenarioDocumentSchema.parse(parsed.scenario));
   const scenario = preserveAppendixImages(
@@ -272,17 +279,17 @@ export async function fillScenarioSection(
 
   const client = getOpenAIClient();
   const model = resolveModel();
-  const reasoningEffort = mapThinkingToReasoningEffort(request.config);
+  const reasoningEffort = mapThinkingToReasoningEffort(request.config, model);
 
   const sectionPrompt = request.prompt?.trim() ? `Additional instruction: ${request.prompt}` : "";
 
   const response = await client.responses.parse({
     model,
     reasoning: { effort: reasoningEffort },
-    max_output_tokens: 7000,
+    max_output_tokens: request.section === "scenarioFlow" ? 6000 : 4000,
     include: ["file_search_call.results"],
     tools: buildRetrievalTool(),
-    text: buildTextConfig(model, zodTextFormat(scenarioDocumentSchema, "scenario_document")),
+    text: buildTextConfig(model, zodTextFormat(sectionOutputSchema(request.section), "scenario_section")),
     input: [
       {
         role: "system",
@@ -291,20 +298,18 @@ export async function fillScenarioSection(
       {
         role: "user",
         content: `Section to fill: ${request.section}.\nCurrent scenario JSON:\n${JSON.stringify(
-          request.scenario,
+          textScenarioContext(request.scenario),
           null,
           2,
-        )}\n\nReturn a complete scenario JSON. Fill missing details in the requested section only.${sectionPrompt}`,
+        )}\n\nReturn only the requested section in the JSON schema. Fill missing details in that section only; do not repeat other sections.${sectionPrompt}`,
       },
     ],
   });
 
-  const generatedScenario = normalizeScenarioForSimMan(
-    scenarioDocumentSchema.parse(response.output_parsed || {}),
-  );
-  const merged = normalizeScenarioForSimMan(
-    mergeSectionWithFillMissing(request.scenario, generatedScenario, request.section),
-  );
+  const output = sectionOutputSchema(request.section).parse(requireCompletedOutput(response));
+  // Normalize the generated section, then merge only that section. Unrelated authored values stay byte-for-byte intact.
+  const generatedScenario = normalizeScenarioForSimMan({ ...request.scenario, [request.section]: output[request.section] });
+  const merged = mergeSectionWithFillMissing(request.scenario, generatedScenario, request.section);
   const mergedWithImages = preserveAppendixImages(merged, request.scenario);
   const warnings = validateScenarioAgainstSimMan(mergedWithImages);
 
