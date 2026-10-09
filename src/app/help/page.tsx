@@ -14,7 +14,7 @@ export default function HelpPage() {
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
             <li>Log in with the site password.</li>
             <li>Choose `Create with AI` or `Fill Worksheet`.</li>
-            <li>Set `Thinking depth` (`0` to `2`) in the right panel.</li>
+            <li>Choose Quick, Balanced, or Thorough in the AI assistant.</li>
             <li>Generate or fill content, then edit directly in the worksheet.</li>
             <li>Use section locks or scenario-flow state locks to preserve content before re-running AI.</li>
             <li>Click `Export DOCX`, choose the Scenario Flow columns you want, then download the Word file.</li>
@@ -27,10 +27,10 @@ export default function HelpPage() {
         <section className="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
           <h2 className="text-lg font-semibold">2. Workspace Layout</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
-            <li>Left panel: navigation across Sections `1` to `15`, plus this `Getting Started / How To Use` page.</li>
+            <li>Use the section navigation to work through all 15 sections. On a phone, use the Section menu.</li>
             <li>Center panel: the editable SIMTAC worksheet with dynamic rows.</li>
             <li>Right panel: AI controls, section locks, and scenario-flow state locks.</li>
-            <li>Use `Hide/Show Left Sidebar` and `Hide/Show Right Sidebar` in the workspace to maximize center editing space.</li>
+            <li>Use View all sections to review the whole worksheet, or focus on one section at a time.</li>
           </ul>
         </section>
 
@@ -59,15 +59,15 @@ export default function HelpPage() {
           <h2 className="text-lg font-semibold">5. Mode B: Fill Worksheet</h2>
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-800">
             <li>Fill key fields first, such as scenario title, patient profile, and learning focus.</li>
-            <li>Use `Fill Missing (Whole Form)` to complete blank areas.</li>
-            <li>Use `AI Fill Section` when you want targeted completion of one section only.</li>
+            <li>Use Fill missing fields to complete blank areas.</li>
+            <li>Use Fill with AI when you want targeted completion of one section only.</li>
           </ol>
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
           <h2 className="text-lg font-semibold">6. Locks and Safe Regeneration</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
-            <li>Section locks are controlled from the right `Section Locks` panel.</li>
+            <li>Section locks are controlled from the AI assistant’s Section protection panel.</li>
             <li>Scenario-flow states can be locked individually using `Lock state` on each state card.</li>
             <li>Locked sections and locked states are clearly shown for quick visual confirmation.</li>
             <li>These locks are respected during `Generate`, `Fill`, and `Update Unlocked with AI` operations.</li>
@@ -91,10 +91,7 @@ export default function HelpPage() {
         <section className="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
           <h2 className="text-lg font-semibold">8. AI Controls</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
-            <li>`Thinking depth` controls reasoning effort and generation time.</li>
-            <li>`0`: instant drafting.</li>
-            <li>`1`: minimum reasoning.</li>
-            <li>`2`: medium reasoning.</li>
+            <li>Quick uses the least reasoning. Balanced is a good starting point. Thorough spends more time on complex scenarios.</li>
             <li>Model selection is fixed by app configuration and not editable in the UI.</li>
           </ul>
         </section>
@@ -137,7 +134,9 @@ export default function HelpPage() {
           <h2 className="text-lg font-semibold">12. Session, Storage, and Security</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-800">
             <li>Site access is password-protected.</li>
-            <li>Scenario drafts autosave in browser local storage.</li>
+            <li>Drafts save on this device. Check the save status in the header; download a backup if storage is full.</li>
+            <li>Download backup saves a JSON copy including images and protection settings. Import backup checks the file before asking to replace your draft.</li>
+            <li>Changing creation mode keeps your draft. Reset All clears it after confirmation.</li>
             <li>There is no user database and no backend draft database.</li>
             <li>Reference retrieval is managed server-side; library administration is not exposed in the user interface.</li>
             <li>`Reset All` clears the workspace after confirmation.</li>

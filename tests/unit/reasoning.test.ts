@@ -10,4 +10,9 @@ describe("mapThinkingToReasoningEffort", () => {
     expect(mapThinkingToReasoningEffort({ thinkingDepth: 3 })).toBe("medium");
     expect(mapThinkingToReasoningEffort({ thinkingDepth: 4 })).toBe("medium");
   });
+  it("uses the minimum supported reasoning for Sol and Astra overrides", () => {
+    expect(mapThinkingToReasoningEffort({ thinkingDepth: 0 }, "gpt-6.1-sol")).toBe("low");
+    expect(mapThinkingToReasoningEffort({ thinkingDepth: 0 }, "gpt-6-astra")).toBe("low");
+    expect(mapThinkingToReasoningEffort({ thinkingDepth: 0 }, "gpt-6-luna")).toBe("none");
+  });
 });

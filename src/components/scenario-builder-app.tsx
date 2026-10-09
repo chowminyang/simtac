@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { StartScreen, WorkspaceHeader, WorkspaceIcon } from "./workspace-chrome";
+import { parseDraft } from "@/lib/draft-storage";
 
 import { normalizeToDmyDate } from "@/lib/date-format";
 import { formatFieldLabel } from "@/lib/label-format";
@@ -452,6 +454,13 @@ export function ScenarioBuilderApp() {
   const [warnings, setWarnings] = useState<ValidationWarning[]>([]);
   const [citations, setCitations] = useState<Citation[]>([]);
   const [activeSection, setActiveSection] = useState<NavigationSectionKey>("courseInfo");
+  const [hydrated, setHydrated] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("Loading draft…");
+  const [storageBlocked, setStorageBlocked] = useState(false);
+  const [showAllSections, setShowAllSections] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
+  const recoveryDraftRef = useRef<string | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [lockedSections, setLockedSections] = useState<Record<SectionKey, boolean>>(
@@ -497,13 +506,15 @@ export function ScenarioBuilderApp() {
   });
 
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-
     try {
-      const parsed = JSON.parse(raw);
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      recoveryDraftRef.current = raw;
+      const parsed = parseDraft(raw);
       if (parsed.scenario) setScenario(normalizeScenario(parsed.scenario as ScenarioDocument));
       if (parsed.mode) setMode(parsed.mode as GenerationMode);
+      if (NAV_SECTION_LIST.some((section) => section.key === parsed.activeSection)) setActiveSection(parsed.activeSection as NavigationSectionKey);
+      if (parsed.lockedFields) setLockedFields(parsed.lockedFields);
       if (parsed.prompt) setPrompt(String(parsed.prompt));
       if (typeof parsed.showLeftSidebar === "boolean") {
         setShowLeftSidebar(parsed.showLeftSidebar);
@@ -556,48 +567,71 @@ export function ScenarioBuilderApp() {
         setLockedScenarioFlowStates(restored);
       }
     } catch {
-      // ignore corrupt local storage payload
+      setStorageBlocked(true);
+      setSaveStatus("Draft could not be restored");
+      setErrorMessage("Your saved draft could not be restored. Download the saved data below, then import a valid backup or use Reset All. The saved data has been kept.");
+    } finally {
+      setHydrated(true);
     }
   }, []);
 
+  function draftSnapshot() {
+    return { version: 1, scenario, mode, prompt, showLeftSidebar, showRightSidebar,
+      activeSection, thinkingDepth, imagePrompt, imageSize, imageQuality, warnings,
+      citations, lockedSections, lockedScenarioFlowStates, lockedFields };
+  }
+
   useEffect(() => {
+    if (!hydrated || storageBlocked) return;
+    setSaveStatus("Saving…");
+    const snapshot = JSON.stringify({ version: 1, scenario, mode, prompt, showLeftSidebar,
+      showRightSidebar, activeSection, thinkingDepth, imagePrompt, imageSize, imageQuality,
+      warnings, citations, lockedSections, lockedScenarioFlowStates, lockedFields });
+    const save = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, snapshot);
+        setSaveStatus("Saved on this device");
+      } catch {
+        setSaveStatus("Not saved — download backup");
+      }
+    };
+    const timer = window.setTimeout(save, 350);
+    // Flush the current draft on navigation; a quota failure remains visible to the author.
+    window.addEventListener("pagehide", save);
+    return () => { window.clearTimeout(timer); window.removeEventListener("pagehide", save); };
+  }, [hydrated, storageBlocked, scenario, mode, prompt, showLeftSidebar, showRightSidebar,
+    activeSection, thinkingDepth, imagePrompt, imageSize, imageQuality, warnings, citations,
+    lockedSections, lockedScenarioFlowStates, lockedFields]);
+
+  function downloadBackup(raw = JSON.stringify(draftSnapshot(), null, 2)) {
+    const url = URL.createObjectURL(new Blob([raw], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `simtac-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importBackup(file: File | undefined) {
+    if (!file) return;
     try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          scenario,
-          mode,
-          prompt,
-          showLeftSidebar,
-          showRightSidebar,
-          thinkingDepth,
-          imagePrompt,
-          imageSize,
-          imageQuality,
-          warnings,
-          citations,
-          lockedSections,
-          lockedScenarioFlowStates,
-        }),
-      );
-    } catch {
-      // ignore storage quota errors for large scenarios containing images
-    }
-  }, [
-    scenario,
-    mode,
-    prompt,
-    showLeftSidebar,
-    showRightSidebar,
-    thinkingDepth,
-    imagePrompt,
-    imageSize,
-    imageQuality,
-    warnings,
-    citations,
-    lockedSections,
-    lockedScenarioFlowStates,
-  ]);
+      if (file.size > 25_000_000) throw new Error("This backup is too large (maximum 25 MB).");
+      const restored = parseDraft(await file.text());
+      if (!window.confirm("Replace the current draft with this backup? Download a backup first if you want to keep both.")) return;
+      setScenario(normalizeScenario(restored.scenario));
+      setMode(restored.mode || "worksheet_assist");
+      setPrompt(restored.prompt || "");
+      setLockedSections({ ...buildSectionLockState(false), ...restored.lockedSections });
+      setLockedScenarioFlowStates(restored.lockedScenarioFlowStates || {});
+      setLockedFields(restored.lockedFields || {});
+      setThinkingDepth(restored.thinkingDepth === 0 ? 0 : restored.thinkingDepth === 2 ? 2 : 1);
+      setActiveSection("courseInfo");
+      setWarnings([]); setCitations([]); setCaptionDrafts({}); setGeneratedImages([]);
+      setStorageBlocked(false); setErrorMessage(""); setStatusMessage("Backup imported.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "This backup could not be imported. Your draft has been kept.");
+    } finally { if (importRef.current) importRef.current.value = ""; }
+  }
 
   useEffect(() => {
     setLockedScenarioFlowStates((current) => {
@@ -614,17 +648,23 @@ export function ScenarioBuilderApp() {
   }, [scenario.scenarioFlow.length]);
 
   useEffect(() => {
-    if (!previewImage) return;
-
+    if (!previewImage && !exportDialogOpen && !updateDialogOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+    const focusable = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href]') || []).filter((element) => element.getClientRects().length > 0);
+    focusable()[0]?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setPreviewImage(null);
+      if (event.key === "Escape") { setPreviewImage(null); setExportDialogOpen(false); setUpdateDialogOpen(false); }
+      if (event.key === "Tab") {
+        const elements = focusable(); const first = elements[0]; const last = elements[elements.length - 1];
+        if (!elements.length) { event.preventDefault(); return; }
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }
     };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [previewImage]);
+    document.addEventListener("keydown", onKeyDown);
+    return () => { document.removeEventListener("keydown", onKeyDown); previous?.focus(); };
+  }, [previewImage, exportDialogOpen, updateDialogOpen]);
 
   const config = useMemo(
     () => ({
@@ -722,18 +762,10 @@ export function ScenarioBuilderApp() {
     () => Object.values(lockedScenarioFlowStates).reduce((count, locked) => count + (locked ? 1 : 0), 0),
     [lockedScenarioFlowStates],
   );
-  const workspaceGridClass = useMemo(() => {
-    if (showLeftSidebar && showRightSidebar) {
-      return "grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_360px]";
-    }
-    if (showLeftSidebar && !showRightSidebar) {
-      return "grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]";
-    }
-    if (!showLeftSidebar && showRightSidebar) {
-      return "grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]";
-    }
-    return "grid gap-4";
-  }, [showLeftSidebar, showRightSidebar]);
+  const activeIndex = NAV_SECTION_LIST.findIndex((section) => section.key === activeSection);
+  const activeLabel = NAV_SECTION_LIST[activeIndex].label.replace(/^\d+\. /, "");
+  const workspaceGridClass = `workspace-grid ${showLeftSidebar ? "with-sections" : ""} ${showRightSidebar ? "with-assistant" : ""}`;
+  const operationBusy = busy || Boolean(busySection) || imageBusy;
 
   async function callApi<T>(url: string, init: RequestInit): Promise<T> {
     const response = await fetch(url, init);
@@ -752,7 +784,7 @@ export function ScenarioBuilderApp() {
   }
 
   async function runGenerate() {
-    if (!mode) return;
+    if (!mode || busy || busySection || imageBusy) return;
     setErrorMessage("");
     setStatusMessage("Generating scenario...");
     setBusy(true);
@@ -763,6 +795,7 @@ export function ScenarioBuilderApp() {
           ? {
               mode,
               prompt,
+              scenario,
               config,
             }
           : {
@@ -802,6 +835,7 @@ export function ScenarioBuilderApp() {
   }
 
   async function runFillSection(section: SectionKey) {
+    if (busy || busySection || imageBusy) return;
     if (lockedSections[section]) {
       setStatusMessage(`Section '${section}' is locked. Unlock it to run AI fill.`);
       return;
@@ -847,7 +881,7 @@ export function ScenarioBuilderApp() {
   }
 
   async function runUpdateUnlockedSections(additionalGuidance?: string): Promise<boolean> {
-    if (!mode) return false;
+    if (!mode || busy || busySection || imageBusy) return false;
     if (lockedSectionCount === SECTION_LIST.length) {
       setErrorMessage("All sections are locked. Unlock at least one section to update with AI.");
       return false;
@@ -981,6 +1015,7 @@ export function ScenarioBuilderApp() {
     modeValue: "new" | "refine",
     baseImageDataUrl?: string,
   ) {
+    if (busy || busySection || imageBusy) return;
     if (!imagePrompt.trim()) {
       setErrorMessage("Enter an image prompt before generating.");
       return;
@@ -1049,6 +1084,7 @@ export function ScenarioBuilderApp() {
   }
 
   function applyWorkspaceReset(nextMode: GenerationMode | null, nextStatusMessage = "") {
+    setStorageBlocked(false);
     setMode(nextMode);
     setScenario(structuredClone(DEFAULT_SCENARIO));
     setPrompt("");
@@ -1073,7 +1109,14 @@ export function ScenarioBuilderApp() {
   }
 
   function switchMode(nextMode: GenerationMode) {
-    applyWorkspaceReset(nextMode);
+    setMode(nextMode);
+    setErrorMessage("");
+    requestAnimationFrame(() => window.scrollTo({ top: 0 }));
+  }
+
+  function returnToStart() {
+    setMode(null);
+    requestAnimationFrame(() => window.scrollTo({ top: 0 }));
   }
 
   function resetAll() {
@@ -1086,130 +1129,67 @@ export function ScenarioBuilderApp() {
 
   function jumpToSection(section: NavigationSectionKey) {
     setActiveSection(section);
-    sectionRefs.current[section]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    requestAnimationFrame(() => {
+      if (showAllSections) sectionRefs.current[section]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      else {
+        headingRef.current?.focus({ preventScroll: true });
+        headingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f7fbff_0%,#f8f6f1_45%,#f3f3f0_100%)] text-slate-900">
-      <div className="mx-auto max-w-[1500px] px-4 py-6 md:px-8">
-        <header className="mb-6 rounded-2xl border border-slate-200 bg-white/85 p-5 shadow-sm backdrop-blur">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h1 className="text-3xl font-semibold tracking-tight">SIMTAC AI Scenario Builder</h1>
-              <p className="mt-2 max-w-4xl text-sm text-slate-700">
-                Generate and refine Singapore-context medical simulation scenarios with strict SimMan capability checks and direct DOCX export.
-              </p>
-              {statusMessage &&
-              !statusMessage.startsWith("Generating medical image") &&
-              !statusMessage.startsWith("Refining medical image") &&
-              !statusMessage.startsWith("Image ") &&
-              !statusMessage.startsWith("Saved appendix image") ? (
-                <p className="mt-2 text-xs text-slate-600">{statusMessage}</p>
-              ) : null}
-              {errorMessage ? <p className="mt-1 text-sm text-rose-700">{errorMessage}</p> : null}
-            </div>
-            <Image
-              src="/images/ttsh-logo.jpg"
-              alt="Tan Tock Seng Hospital logo"
-              width={496}
-              height={308}
-              className="h-24 w-auto shrink-0 object-contain sm:h-28 md:h-32"
-              unoptimized
-              loading="eager"
-            />
-          </div>
-        </header>
-
-        {!mode ? (
-          <section className="grid gap-4 md:grid-cols-2">
-            <button
-              type="button"
-              className="rounded-2xl border border-slate-300 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              onClick={() => switchMode("ai_prompt")}
-            >
-              <h2 className="text-xl font-semibold">Create with AI</h2>
-              <p className="mt-2 text-sm text-slate-700">
-                Describe a scenario in free text and let AI build a complete SIMTAC worksheet for Singapore healthcare training.
-              </p>
-            </button>
-            <button
-              type="button"
-              className="rounded-2xl border border-slate-300 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              onClick={() => switchMode("worksheet_assist")}
-            >
-              <h2 className="text-xl font-semibold">Fill Worksheet</h2>
-              <p className="mt-2 text-sm text-slate-700">
-                Fill key worksheet fields manually and use AI to complete missing sections using Singapore-context clinical logic.
-              </p>
-            </button>
-          </section>
+    <div className={`workspace-shell ${showAllSections ? "all-sections" : "focused-section"}`}>
+      <WorkspaceHeader saveStatus={saveStatus} hasWorkspace={Boolean(mode)} onExport={openExportDialog} />
+      <input ref={importRef} type="file" accept=".json,application/json" hidden aria-label="Import draft backup" onChange={(event) => void importBackup(event.target.files?.[0])} />
+      <div className="workspace-container">
+        {errorMessage ? <div className="workspace-error" role="alert">{errorMessage}</div> : null}
+        {storageBlocked && recoveryDraftRef.current ? <button type="button" className="ui-button mb-4" onClick={() => downloadBackup(recoveryDraftRef.current!)}>Download saved data</button> : null}
+        {statusMessage ? <div className="workspace-message" role="status" aria-live="polite">{statusMessage}</div> : null}
+        {!hydrated ? <p className="loading-draft">Loading your draft…</p> : !mode ? (
+          <StartScreen onChoose={switchMode} onImport={() => importRef.current?.click()} hasDraft={Boolean(scenario.courseInfo.courseTitle || prompt)} />
         ) : (
           <div className={workspaceGridClass}>
             {showLeftSidebar ? (
-              <aside className="sticky top-4 flex max-h-[calc(100vh-2rem)] flex-col rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
-                <button
-                  type="button"
-                  className="mb-3 w-full rounded-md border border-slate-300 px-2 py-1 text-xs font-medium"
-                  onClick={() => setMode(null)}
-                >
-                  Back to mode selection
-                </button>
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                  <ul className="space-y-1">
-                    {NAV_SECTION_LIST.map((section) => (
-                      <li key={section.key}>
-                        <button
-                          type="button"
-                          onClick={() => jumpToSection(section.key)}
-                          className={`w-full rounded-md px-2 py-2 text-left text-xs transition ${
-                            activeSection === section.key
-                              ? "bg-slate-900 text-white"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                          }`}
-                        >
-                          {section.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <a
-                  href="/help"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 block w-full rounded-md bg-emerald-700 px-2 py-2 text-center text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-800"
-                >
-                  Getting Started / How To Use
-                </a>
+              <aside className="section-navigation" aria-label="Worksheet sections">
+                <div className="section-navigation-title">WORKSHEET SECTIONS</div>
+                <nav><ul>
+                  {NAV_SECTION_LIST.map((section, index) => (
+                    <li key={section.key}>
+                      <button type="button" onClick={() => jumpToSection(section.key)} aria-current={activeSection === section.key ? "step" : undefined}>
+                        <span className="section-number">{String(index + 1).padStart(2, "0")}</span>
+                        <span>{section.label.replace(/^\d+\. /, "")}</span>
+                        {SECTION_KEY_SET.has(section.key as SectionKey) && lockedSections[section.key as SectionKey] ? <span className="nav-lock" aria-label="Locked">◆</span> : null}
+                      </button>
+                    </li>
+                  ))}
+                </ul></nav>
+                <button type="button" className="ui-text-button back-to-start" onClick={returnToStart} disabled={operationBusy}>Change creation mode</button>
               </aside>
             ) : null}
 
-            <main className="space-y-4">
-              <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Workspace Layout</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium"
-                      onClick={() => setShowLeftSidebar((current) => !current)}
-                    >
-                      {showLeftSidebar ? "Hide Left Sidebar" : "Show Left Sidebar"}
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium"
-                      onClick={() => setShowRightSidebar((current) => !current)}
-                    >
-                      {showRightSidebar ? "Hide Right Sidebar" : "Show Right Sidebar"}
-                    </button>
-                  </div>
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <h2 className="text-lg font-semibold">Scenario Prompt</h2>
-                <textarea
+            <main className="editor-main">
+              <div className="editor-toolbar">
+                <label className="mobile-section-picker">Section
+                  <select aria-label="Worksheet section" value={activeSection} onChange={(event) => jumpToSection(event.target.value as NavigationSectionKey)}>
+                    {NAV_SECTION_LIST.map((section) => <option key={section.key} value={section.key}>{section.label}</option>)}
+                  </select>
+                </label>
+                <button type="button" className="ui-text-button mobile-mode-button" disabled={operationBusy} onClick={returnToStart}>Change mode</button>
+                <label className="all-sections-toggle"><input type="checkbox" checked={showAllSections} onChange={(event) => setShowAllSections(event.target.checked)} /> View all sections</label>
+                <button type="button" className="ui-text-button" onClick={() => setShowLeftSidebar((value) => !value)}>{showLeftSidebar ? "Hide sections" : "Show sections"}</button>
+                <button type="button" className="ui-text-button toolbar-backup" onClick={() => downloadBackup()}>Download backup</button>
+                <button type="button" className="ui-text-button" onClick={() => setShowRightSidebar((value) => !value)}>{showRightSidebar ? "Hide assistant" : "Show assistant"}</button>
+              </div>
+              <div className="editor-intro">
+                <h1 ref={headingRef} tabIndex={-1}>{showAllSections ? "Scenario worksheet" : activeLabel}</h1>
+                <p>{activeSection === "courseInfo" ? "Set the course context and who this scenario is designed for." : "Review and refine this part of your simulation. Use AI to fill any gaps."}</p>
+              </div>
+              {mode === "ai_prompt" ? (
+              <details className="scenario-prompt" open={mode === "ai_prompt" ? true : undefined}>
+                <summary>Scenario prompt <span>Guidance for AI</span></summary>
+                <label className="sr-only" htmlFor="scenario-prompt">Scenario prompt</label>
+                <textarea id="scenario-prompt"
                   className="mt-2 h-28 w-full rounded-md border border-slate-300 p-2 text-sm"
                   value={prompt}
                   onChange={(event) => setPrompt(event.target.value)}
@@ -1223,7 +1203,7 @@ export function ScenarioBuilderApp() {
                   <div className="mt-3 flex justify-end">
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={operationBusy}
                       className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                       onClick={runGenerate}
                     >
@@ -1231,14 +1211,17 @@ export function ScenarioBuilderApp() {
                     </button>
                   </div>
                 ) : null}
-              </section>
+              </details>
 
+              ) : null}
+              <fieldset className="section-fields" disabled={busy || Boolean(busySection)}>
+              {(showAllSections || activeSection === "courseInfo") ? (
               <section
                 id="courseInfo"
                 ref={(element) => {
                   sectionRefs.current.courseInfo = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="1. Course & Trainee Information"
@@ -1258,13 +1241,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "objectives") ? (
               <section
                 id="objectives"
                 ref={(element) => {
                   sectionRefs.current.objectives = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="2. Specific Learning Objectives"
@@ -1284,13 +1269,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "clinicalSetting") ? (
               <section
                 id="clinicalSetting"
                 ref={(element) => {
                   sectionRefs.current.clinicalSetting = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="3. Clinical / Environment Setting"
@@ -1331,13 +1318,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "instructors") ? (
               <section
                 id="instructors"
                 ref={(element) => {
                   sectionRefs.current.instructors = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="4. Instructor Information"
@@ -1357,13 +1346,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "confederates") ? (
               <section
                 id="confederates"
                 ref={(element) => {
                   sectionRefs.current.confederates = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="5. Confederate Information"
@@ -1383,13 +1374,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "traineeRoles") ? (
               <section
                 id="traineeRoles"
                 ref={(element) => {
                   sectionRefs.current.traineeRoles = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="6. Trainees Role"
@@ -1409,13 +1402,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "patientInfo") ? (
               <section
                 id="patientInfo"
                 ref={(element) => {
                   sectionRefs.current.patientInfo = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="7. Patient Information"
@@ -1435,13 +1430,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "scenarioInfo") ? (
               <section
                 id="scenarioInfo"
                 ref={(element) => {
                   sectionRefs.current.scenarioInfo = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="8. Scenario Information"
@@ -1461,13 +1458,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "scenarioFlow") ? (
               <section
                 id="scenarioFlow"
                 ref={(element) => {
                   sectionRefs.current.scenarioFlow = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="9. Scenario Flow"
@@ -1690,13 +1689,15 @@ export function ScenarioBuilderApp() {
                   })}
                 </div>
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "equipment") ? (
               <section
                 id="equipment"
                 ref={(element) => {
                   sectionRefs.current.equipment = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="10. Equipment"
@@ -1720,7 +1721,7 @@ export function ScenarioBuilderApp() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
+                  <table className="w-full min-w-[640px] border-collapse text-sm">
                     <thead>
                       <tr className="bg-slate-100">
                         <th className="border border-slate-300 px-2 py-1 text-left">Category</th>
@@ -1741,6 +1742,7 @@ export function ScenarioBuilderApp() {
                                   ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
                                   : "border-slate-300"
                               }`}
+                              aria-label={`Equipment category, row ${index + 1}`}
                               value={item.category}
                               disabled={isFieldLocked(`equipment.${index}.category`)}
                               onFocus={() => setSelectedFieldPath(`equipment.${index}.category`)}
@@ -1759,6 +1761,7 @@ export function ScenarioBuilderApp() {
                                   ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
                                   : "border-slate-300"
                               }`}
+                              aria-label={`Equipment item, row ${index + 1}`}
                               value={item.item}
                               disabled={isFieldLocked(`equipment.${index}.item`)}
                               onFocus={() => setSelectedFieldPath(`equipment.${index}.item`)}
@@ -1776,6 +1779,7 @@ export function ScenarioBuilderApp() {
                                   ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
                                   : "border-slate-300"
                               }`}
+                              aria-label={`Equipment quantity, row ${index + 1}`}
                               value={item.quantity || ""}
                               disabled={isFieldLocked(`equipment.${index}.quantity`)}
                               onFocus={() => setSelectedFieldPath(`equipment.${index}.quantity`)}
@@ -1794,6 +1798,7 @@ export function ScenarioBuilderApp() {
                                   ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100"
                                   : "border-slate-300"
                               }`}
+                              aria-label={`Equipment remarks, row ${index + 1}`}
                               value={item.remarks || ""}
                               disabled={isFieldLocked(`equipment.${index}.remarks`)}
                               onFocus={() => setSelectedFieldPath(`equipment.${index}.remarks`)}
@@ -1825,13 +1830,15 @@ export function ScenarioBuilderApp() {
                   </table>
                 </div>
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "debriefInfo") ? (
               <section
                 id="debriefInfo"
                 ref={(element) => {
                   sectionRefs.current.debriefInfo = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="11. Debrief Information"
@@ -1851,13 +1858,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "simulatorPrep") ? (
               <section
                 id="simulatorPrep"
                 ref={(element) => {
                   sectionRefs.current.simulatorPrep = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="12. Simulator / SP / Task Trainer Preparation"
@@ -1877,13 +1886,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "monitorSetup") ? (
               <section
                 id="monitorSetup"
                 ref={(element) => {
                   sectionRefs.current.monitorSetup = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="13. Patient Monitor Setup"
@@ -1964,13 +1975,15 @@ export function ScenarioBuilderApp() {
                   </div>
                 </div>
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "documentInfo") ? (
               <section
                 id="documentInfo"
                 ref={(element) => {
                   sectionRefs.current.documentInfo = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <SectionHeader
                   title="14. Document Information"
@@ -1994,13 +2007,15 @@ export function ScenarioBuilderApp() {
                   }
                 />
               </section>
+              ) : null}
 
+              {(showAllSections || activeSection === "appendixImages") ? (
               <section
                 id="appendixImages"
                 ref={(element) => {
                   sectionRefs.current.appendixImages = element;
                 }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                className="worksheet-panel"
               >
                 <h2 className="text-base font-semibold">15. Simulation Images</h2>
                 <p className="mt-1 text-sm text-slate-700">
@@ -2061,7 +2076,7 @@ export function ScenarioBuilderApp() {
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    disabled={imageBusy}
+                    disabled={operationBusy}
                     className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
                     onClick={() => runGenerateImage("new")}
                   >
@@ -2069,7 +2084,7 @@ export function ScenarioBuilderApp() {
                   </button>
                   <button
                     type="button"
-                    disabled={imageBusy || !latestRefinementSource}
+                    disabled={operationBusy || !latestRefinementSource}
                     className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium disabled:opacity-50"
                     onClick={() => runGenerateImage("refine", latestRefinementSource?.dataUrl)}
                   >
@@ -2237,67 +2252,46 @@ export function ScenarioBuilderApp() {
                   )}
                 </div>
               </section>
+              ) : null}
+              </fieldset>
+              <div className="section-pager">
+                <button type="button" className="ui-button" disabled={activeIndex === 0} onClick={() => jumpToSection(NAV_SECTION_LIST[activeIndex - 1].key)}><WorkspaceIcon kind="back" />Previous section</button>
+                <span>{activeIndex + 1} of {NAV_SECTION_LIST.length}</span>
+                <button type="button" className="ui-button ui-button-primary" disabled={activeIndex === NAV_SECTION_LIST.length - 1} onClick={() => jumpToSection(NAV_SECTION_LIST[activeIndex + 1].key)}>Next section<WorkspaceIcon kind="arrow" /></button>
+              </div>
+              {mode === "worksheet_assist" ? (
+              <details className="scenario-prompt" >
+                <summary>Scenario prompt <span>Guidance for AI</span></summary>
+                <label className="sr-only" htmlFor="scenario-prompt">Scenario prompt</label>
+                <textarea id="scenario-prompt"
+                  className="mt-2 h-28 w-full rounded-md border border-slate-300 p-2 text-sm"
+                  value={prompt}
+                  onChange={(event) => setPrompt(event.target.value)}
+                  placeholder={
+                    "Optional guidance for AI filling, e.g. focus on airway escalation, ISBAR/SBAR communication, and local escalation pathways."
+                  }
+                />
+
+              </details>
+
+              ) : null}
             </main>
 
             {showRightSidebar ? (
-              <aside className="sticky top-4 max-h-[calc(100vh-2rem)] space-y-4 overflow-y-auto rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-                <div>
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">AI Controls</h3>
-                  <div className="mt-2 space-y-2">
-                    <label className="block text-xs font-medium uppercase tracking-wide text-slate-600">
-                      Thinking depth: {thinkingDepth}
-                      <input
-                        type="range"
-                        min={0}
-                        max={2}
-                        step={1}
-                        value={thinkingDepth}
-                        onChange={(event) => setThinkingDepth(Number(event.target.value) as ThinkingDepth)}
-                        className="mt-1 w-full"
-                      />
-                      <span className="mt-1 block normal-case text-[11px] text-slate-500">
-                        0 = none, 1 = minimum, 2 = medium
-                      </span>
-                    </label>
-
-                    <div className="space-y-2">
-                      {mode === "worksheet_assist" ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                          onClick={runGenerate}
-                        >
-                          {busy ? "Working..." : "Fill Missing (Whole Form)"}
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        disabled={busy || lockedSectionCount === SECTION_LIST.length}
-                        className="w-full rounded-md border border-slate-900 px-3 py-2 text-sm font-medium text-slate-900 disabled:opacity-50"
-                        onClick={openUpdateUnlockedDialog}
-                      >
-                        {busy ? "Working..." : "Update Unlocked with AI"}
-                      </button>
-                      <button
-                        type="button"
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
-                        onClick={openExportDialog}
-                      >
-                        Export DOCX
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || imageBusy}
-                        className="w-full rounded-md border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 disabled:opacity-50"
-                        onClick={resetAll}
-                      >
-                        Reset All
-                      </button>
+              <aside className="ai-assistant" aria-label="AI assistant">
+                <details className="assistant-details" open>
+                  <summary><WorkspaceIcon kind="spark" />AI assistant</summary>
+                  <div className="assistant-content">
+                    <p className="assistant-copy">Build and refine your scenario.</p>
+                    <div className="effort-control" role="group" aria-label="AI thinking depth">
+                      {(["Quick", "Balanced", "Thorough"] as const).map((label, index) => <button type="button" key={label} aria-pressed={thinkingDepth === index} onClick={() => setThinkingDepth(index as ThinkingDepth)} disabled={operationBusy}>{label}</button>)}
                     </div>
-                  </div>
-                </div>
-
+                    <p className="effort-description">{thinkingDepth === 0 ? "Fastest drafts with less reasoning." : thinkingDepth === 1 ? "A balance of speed and reasoning." : "More reasoning for complex scenarios."}</p>
+                    {mode === "worksheet_assist" ? <button type="button" className="ui-button ui-button-primary assistant-action" disabled={operationBusy} onClick={runGenerate}>{busy ? "Working…" : "Fill missing fields"}</button> : null}
+                    <button type="button" className="ui-button assistant-action" disabled={operationBusy || lockedSectionCount === SECTION_LIST.length} onClick={openUpdateUnlockedDialog}>{busy ? "Working…" : "Update unlocked with AI"}</button>
+                    <details className="protection-details">
+                      <summary>Section protection <span>{lockedSectionCount} locked</span></summary>
+                      <fieldset disabled={operationBusy} className="section-fields">
                 <div>
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
                     Section Locks ({lockedSectionCount}/{SECTION_LIST.length})
@@ -2374,6 +2368,16 @@ export function ScenarioBuilderApp() {
                   </button>
                 </div>
 
+                      </fieldset>
+                    </details>
+                    <div className="backup-actions">
+                      <button type="button" className="ui-button assistant-action" onClick={() => downloadBackup()}><WorkspaceIcon kind="download" />Download backup</button>
+                      <button type="button" className="ui-text-button" disabled={operationBusy} onClick={() => importRef.current?.click()}>Import backup</button>
+                      <button type="button" className="ui-text-button reset-button" disabled={operationBusy} onClick={resetAll}>Reset All</button>
+                    </div>
+                    <p className="clinical-note">Review clinical content before teaching.</p>
+                  </div>
+                </details>
               </aside>
             ) : null}
           </div>
@@ -2422,7 +2426,7 @@ export function ScenarioBuilderApp() {
       ) : null}
 
       {exportDialogOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+        <div role="dialog" aria-modal="true" aria-label="Export DOCX" className="workspace-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
           <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
             <h2 className="text-lg font-semibold">Export DOCX</h2>
             <p className="mt-2 text-sm text-slate-700">
@@ -2484,7 +2488,7 @@ export function ScenarioBuilderApp() {
       ) : null}
 
       {updateDialogOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+        <div role="dialog" aria-modal="true" aria-label="Update Unlocked with AI" className="workspace-modal fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
           <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
             <h2 className="text-lg font-semibold">Update Unlocked with AI</h2>
             <p className="mt-2 text-sm text-slate-700">
@@ -2492,6 +2496,7 @@ export function ScenarioBuilderApp() {
             </p>
             <textarea
               className="mt-3 h-36 w-full rounded-md border border-slate-300 p-2 text-sm"
+              aria-label="Update instructions"
               value={updateDialogPrompt}
               onChange={(event) => setUpdateDialogPrompt(event.target.value)}
               placeholder="Example: Strengthen hemodynamic progression, add clearer trigger points for state transitions, and include communication cues for nursing handover."
@@ -2501,7 +2506,7 @@ export function ScenarioBuilderApp() {
                 type="button"
                 className="rounded-md border border-slate-300 px-3 py-2 text-sm"
                 onClick={() => setUpdateDialogOpen(false)}
-                disabled={busy}
+                disabled={operationBusy}
               >
                 Cancel
               </button>
@@ -2509,7 +2514,7 @@ export function ScenarioBuilderApp() {
                 type="button"
                 className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
                 onClick={submitUpdateUnlockedDialog}
-                disabled={busy}
+                disabled={operationBusy}
               >
                 {busy ? "Updating..." : "Run Update"}
               </button>
@@ -2530,16 +2535,17 @@ type SectionHeaderProps = {
 
 function SectionHeader({ title, loading, locked, onFill }: SectionHeaderProps) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-2">
-      <h2 className="text-base font-semibold">{title}</h2>
+    <div className="section-panel-heading">
+      <h2>{title}</h2>
+      <span className="section-progress">Section {title.split(".")[0]} of 15</span>
       <div className="flex items-center gap-2">
         <button
           type="button"
-          className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium"
+          className="ui-button fill-section-button"
           disabled={loading || locked}
           onClick={onFill}
         >
-          {loading ? "AI filling..." : "AI Fill Section"}
+          <WorkspaceIcon kind="spark" />{loading ? "Filling…" : "Fill with AI"}
         </button>
       </div>
     </div>
@@ -2613,12 +2619,17 @@ function RecordEditor({ sectionKey, record, isFieldLocked, onFieldFocus, onChang
         }
 
         return (
-          <label key={key} className="text-xs font-medium uppercase tracking-wide text-slate-600">
+          <label key={key} className={`record-field text-xs font-medium uppercase tracking-wide text-slate-600 ${/prerequisite|History|Medications|Allergies|Summary|Description|Information|scenarioTitle/.test(key) ? "wide-field" : ""}`}>
             {label}
             <textarea
               className={`mt-1 h-16 w-full rounded-md border p-2 text-sm normal-case ${
                 locked ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100" : "border-slate-300"
               }`}
+              ref={(element) => {
+                if (!element) return;
+                element.style.height = "auto";
+                element.style.height = `${Math.max(48, element.scrollHeight + 2)}px`;
+              }}
               value={value}
               disabled={locked}
               onFocus={() => onFieldFocus(fieldPath)}
@@ -2649,6 +2660,7 @@ function ArrayEditor({ sectionKey, items, isFieldLocked, onFieldFocus, onChange 
         className={`h-28 w-full rounded-md border p-2 text-sm ${
           locked ? "border-amber-300 bg-amber-50 text-amber-900 disabled:border-amber-300 disabled:bg-amber-50 disabled:text-amber-900 disabled:opacity-100" : "border-slate-300"
         }`}
+        aria-label={`${formatFieldLabel(sectionKey)} entries, one per line`}
         value={textareaFromArray(items)}
         disabled={locked}
         onFocus={() => onFieldFocus(sectionKey)}
